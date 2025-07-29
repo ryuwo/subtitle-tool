@@ -1,4 +1,4 @@
-# 자막 오역 수정 도구 (Subtitle Correction Tool)
+# 자막 오역 수정 도구
 
 ## 사용 방법
 
@@ -10,12 +10,9 @@
 
 ## 주의 사항
 
-- Google Sheets API 키는 이미 설정되어 있습니다.
 - 자막 파일은 `.srt` 형식을 권장합니다.
-- 번역가 분들은 Google Sheets에서 오역 리스트를 자유롭게 업데이트하실 수 있습니다.
 - 인터넷 연결이 필요합니다.
 - 최신 웹 브라우저(Chrome, Firefox, Edge, Safari) 사용 권장
-
 ---
 
 필요한 경우 문의 보내주세요!

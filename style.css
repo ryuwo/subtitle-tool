@@ -137,3 +137,33 @@ textarea {
         gap: 10px;
     }
 }
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-bottom: 10px;
+}
+
+.company-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 8px;  /* 로고에 약간의 둥근 모서리 */
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .header-content {
+        gap: 12px;
+    }
+    
+    .company-logo {
+        width: 35px;
+        height: 35px;
+    }
+}
+.header-content h1 {
+    margin-top: 8px;  /* 이 값을 조정해서 아래로 이동 */
+    margin-bottom: 0;
+}

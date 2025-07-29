@@ -2,7 +2,7 @@
 
 ## 사용 방법
 
-1. 위 URL(https://your-id.github.io/subtitle-tool/)로 접속하세요.
+1. github URL로 접속하세요.
 2. Google Sheets 공유 링크를 입력하고 '연결하기'를 누릅니다.
 3. 자막 파일(.srt) 업로드 또는 텍스트를 붙여넣기 합니다.
 4. '자막 파일 처리하기' 버튼을 클릭하여 수정된 대사 목록을 확인합니다.

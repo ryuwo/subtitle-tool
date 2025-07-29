@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자막 오역 수정 도구</title>
+    
+    <!-- CORS 정책 설정 -->
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 기존 body 내용 그대로 -->
+    <div class="container">
+        <header>
+            <h1>🎬 자막 오역 수정 도구</h1>
+            <p>Google Sheets 기반 자동 오역 수정 시스템</p>
+        </header>
+
+        <main>
+            <!-- 기존 내용 그대로 -->
+            <section class="connection-section">
+                <h2>📊 Google Sheets 연결</h2>
+                <input type="text" id="spreadsheet-url" placeholder="Google Sheets 공유 링크를 붙여넣으세요">
+                <button onclick="connectToSheets()">연결하기</button>
+                <div id="connection-status" class="status"></div>
+            </section>
+
+            <section class="dictionary-section">
+                <h2>📚 오역 사전 현황</h2>
+                <div class="dict-info">
+                    <span>현재 등록된 오역 항목: <strong id="dict-count">0</strong>개</span>
+                    <button onclick="refreshDictionary()">새로고침</button>
+                </div>
+                <div id="dict-preview" class="dict-preview"></div>
+            </section>
+
+            <section class="process-section">
+    <h2>🎭 자막 파일 처리</h2>
+    <div class="file-upload">
+        <input type="file" id="subtitle-file" accept=".srt,.vtt">
+        <button onclick="processFile()">자막 파일 처리하기</button>
+    </div>
+    
+    <div class="text-areas">
+        <div class="text-area-container">
+            <h3>원본 자막</h3>
+            <textarea id="original-subtitle" placeholder="자막 파일을 업로드하거나 여기에 붙여넣으세요"></textarea>
+        </div>
+        <div class="text-area-container">
+            <h3>수정된 대사 목록</h3>
+            <textarea id="processed-subtitle" readonly placeholder="수정된 대사들이 여기에 표시됩니다"></textarea>
+            <button onclick="downloadResult()">다운로드</button>
+        </div>
+    </div>
+    
+    <!-- 전체 수정된 자막 저장용 (숨겨진 textarea) -->
+    <textarea id="full-corrected-subtitle" style="display: none;"></textarea>
+</section>
+
+        </main>
+    </div>
+
+    <!-- Google API를 동적으로 로드 -->
+    <script src="config.js"></script>
+    <script>
+        // Google API 동적 로딩
+        function loadGoogleAPI() {
+            const script = document.createElement('script');
+            script.src = 'https://apis.google.com/js/api.js';
+            script.onload = function() {
+                initializeGoogleAPI();
+            };
+            script.onerror = function() {
+                console.error('Google API 로드 실패');
+                updateConnectionStatus('Google API 로드 실패', 'error');
+            };
+            document.head.appendChild(script);
+        }
+        
+        // 페이지 로드 완료 후 API 로드
+        window.addEventListener('load', loadGoogleAPI);
+    </script>
+    <script src="subtitle-processor.js"></script>
+</body>
+</html>

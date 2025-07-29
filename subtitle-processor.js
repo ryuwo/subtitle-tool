@@ -155,7 +155,7 @@ function processFile() {
     }
 }
 
-// 자막 오역 수정 (수정된 대사만 표시)
+// 자막 오역 수정 (행번호 공백 검출 개선)
 function processSubtitles(srtContent) {
     if (Object.keys(mistranslationDict).length === 0) {
         updateConnectionStatus('오역 사전이 비어있습니다. 스프레드시트를 확인해주세요', 'error');
@@ -164,20 +164,21 @@ function processSubtitles(srtContent) {
     
     let correctedContent = srtContent;
     let changesCount = 0;
-    const changes = [];
-    const modifiedSubtitles = []; // 수정된 자막들만 저장
+    let autoFixCount = 0;
+    const modifiedSubtitles = [];
     
-    // SRT 파싱
+    // 원본 블록들을 먼저 분리 (공백 보존)
+    const originalBlocks = srtContent.trim().split(/\n\s*\n/);
     const subtitles = parseSRT(srtContent);
     
-    // 각 자막에 대해 오역 수정 수행
-    subtitles.forEach(subtitle => {
+    subtitles.forEach((subtitle, index) => {
         let originalText = subtitle.text;
         let modifiedText = originalText;
         let hasChanges = false;
+        let hasAutoFix = false;
         const subtitleChanges = [];
         
-        // 각 오역에 대해 치환 수행
+        // 1. 오역 사전 기반 수정
         for (const [wrongWord, correctWord] of Object.entries(mistranslationDict)) {
             const regex = new RegExp('\\b' + escapeRegExp(wrongWord) + '\\b', 'g');
             const matches = modifiedText.match(regex);
@@ -190,8 +191,44 @@ function processSubtitles(srtContent) {
             }
         }
         
-        // 수정된 자막이 있으면 저장
-        if (hasChanges) {
+        // 2. 자동 수정 기능들
+        
+        // 2-1. 숫자 뒤 온점 추가 (마지막 단어가 숫자인 경우)
+        if (/(\b\d+)$/.test(modifiedText)) {
+            modifiedText = modifiedText.replace(/(\b\d+)$/g, '$1.');
+            hasAutoFix = true;
+            subtitleChanges.push('숫자 뒤 온점 추가');
+        }
+        
+        // 2-2. 텍스트 앞뒤 공백 제거
+        const trimmedText = modifiedText.trim();
+        if (trimmedText !== modifiedText) {
+            modifiedText = trimmedText;
+            hasAutoFix = true;
+            subtitleChanges.push('텍스트 공백 정리');
+        }
+        
+        // 3. 원본 블록에서 행번호/타임라인 공백 체크
+        if (originalBlocks[index]) {
+            const blockLines = originalBlocks[index].trim().split('\n');
+            
+            // 행번호 공백 체크 (첫 번째 줄)
+            if (blockLines[0] !== blockLines[0].trim()) {
+                hasAutoFix = true;
+                subtitleChanges.push('행번호 공백 제거');
+            }
+            
+            // 타임라인 공백 체크 (두 번째 줄)
+            if (blockLines[1] && blockLines[1] !== blockLines[1].trim()) {
+                hasAutoFix = true;
+                subtitleChanges.push('타임라인 공백 제거');
+            }
+        }
+        
+        // 수정사항이 있으면 기록
+        if (hasChanges || hasAutoFix) {
+            if (hasAutoFix) autoFixCount++;
+            
             modifiedSubtitles.push({
                 id: subtitle.id,
                 time: subtitle.time,
@@ -201,31 +238,32 @@ function processSubtitles(srtContent) {
             });
         }
         
-        // 전체 자막에서도 수정 적용
         subtitle.text = modifiedText;
     });
     
-    // 전체 수정된 자막 생성 (다운로드용)
     correctedContent = generateSRT(subtitles);
-    
-    // 수정된 대사만 표시
     displayModifiedSubtitles(modifiedSubtitles);
-    
-    // 전체 수정된 자막은 숨겨진 영역에 저장 (다운로드용)
     document.getElementById('full-corrected-subtitle').value = correctedContent;
     
     // 결과 메시지
-    if (changesCount > 0) {
-        updateConnectionStatus(
-            `처리 완료: ${changesCount}개 수정사항 적용 (${modifiedSubtitles.length}개 자막 수정)`, 
-            'success'
-        );
+    if (changesCount > 0 || autoFixCount > 0) {
+        let statusMessage = `처리 완료: `;
+        if (changesCount > 0) {
+            statusMessage += `${changesCount}개 오역 수정`;
+        }
+        if (autoFixCount > 0) {
+            if (changesCount > 0) statusMessage += `, `;
+            statusMessage += `${autoFixCount}개 자동 수정`;
+        }
+        statusMessage += ` (총 ${modifiedSubtitles.length}개 자막 수정)`;
+        
+        updateConnectionStatus(statusMessage, 'success');
     } else {
-        updateConnectionStatus('수정할 오역이 발견되지 않았습니다', 'success');
+        updateConnectionStatus('수정할 내용이 발견되지 않았습니다', 'success');
     }
 }
 
-// SRT 자막 파싱 함수 수정
+// SRT 자막 파싱 (행번호 공백 수정 포함)
 function parseSRT(srtContent) {
     const subtitles = [];
     const blocks = srtContent.trim().split(/\n\s*\n/);
@@ -234,8 +272,8 @@ function parseSRT(srtContent) {
         const lines = block.trim().split('\n');
         if (lines.length >= 3) {
             const subtitle = {
-                id: lines[0],
-                time: lines[1],
+                id: lines[0].trim(), // 행번호 앞뒤 공백 제거
+                time: lines[1].trim(), // 타임라인 앞뒤 공백 제거
                 text: lines.slice(2).join('\n')
             };
             subtitles.push(subtitle);
@@ -244,6 +282,7 @@ function parseSRT(srtContent) {
     
     return subtitles;
 }
+
 
 // 수정된 자막만 표시하는 함수
 function displayModifiedSubtitles(modifiedSubtitles) {
@@ -267,27 +306,19 @@ function displayModifiedSubtitles(modifiedSubtitles) {
     processedTextArea.value = displayText;
 }
 
-// 다운로드 함수 수정
+// 전체 자막 파일 다운로드 (수정된 내용 적용)
 function downloadResult() {
     const fullText = document.getElementById('full-corrected-subtitle').value;
-    const modifiedOnlyText = document.getElementById('processed-subtitle').value;
     
     if (!fullText.trim()) {
         alert('처리된 자막이 없습니다');
         return;
     }
     
-    // 사용자에게 다운로드 옵션 선택하게 하기
-    const choice = confirm('전체 수정된 자막 파일을 다운로드하시겠습니까?\n\n확인: 전체 자막 파일\n취소: 수정된 부분만');
-    
-    if (choice) {
-        // 전체 자막 파일 다운로드
-        downloadFile(fullText, 'corrected_subtitle.srt', 'text/plain');
-    } else {
-        // 수정된 부분만 다운로드
-        downloadFile(modifiedOnlyText, 'modified_parts.txt', 'text/plain');
-    }
+    // 전체 자막 파일 다운로드 (기본값)
+    downloadFile(fullText, 'corrected_subtitle.srt', 'text/plain');
 }
+
 
 // 파일 다운로드 헬퍼 함수
 function downloadFile(content, filename, mimeType) {
@@ -314,45 +345,45 @@ function updateConnectionStatus(message, type) {
     }
 }
 
+// 오역 사전 표시 (그룹별 표시 방식)
 function updateDictionaryDisplay() {
     const countElement = document.getElementById('dict-count');
     const previewElement = document.getElementById('dict-preview');
     
-    if (countElement) {
-        countElement.textContent = Object.keys(mistranslationDict).length;
+    // 개수 표시
+    countElement.textContent = Object.keys(mistranslationDict).length;
+    
+    // 올바른 단어별로 그룹화
+    const groupedDict = {};
+    for (const [wrong, correct] of Object.entries(mistranslationDict)) {
+        if (!groupedDict[correct]) {
+            groupedDict[correct] = [];
+        }
+        groupedDict[correct].push(wrong);
     }
     
-    if (previewElement) {
-        let previewHTML = '<strong>오역 → 수정</strong><br>';
-        const entries = Object.entries(mistranslationDict).slice(0, 10);
-        
-        entries.forEach(([wrong, correct]) => {
-            previewHTML += `<span style="color: #e74c3c;">${wrong}</span> → <span style="color: #27ae60;">${correct}</span><br>`;
-        });
-        
-        if (Object.keys(mistranslationDict).length > 10) {
-            previewHTML += `<em>... 외 ${Object.keys(mistranslationDict).length - 10}개</em>`;
-        }
-        
-        previewElement.innerHTML = previewHTML;
+    // HTML 생성
+    let previewHTML = '<strong>📝 오역 그룹별 현황</strong><br><br>';
+    
+    // 그룹별로 표시
+    Object.entries(groupedDict).forEach(([correctWord, wrongWords]) => {
+        previewHTML += `<div style="margin-bottom: 15px;">`;
+        previewHTML += `<span style="color: #2980b9; font-weight: bold;">📝 ${correctWord} 관련 오역 (${wrongWords.length}개)</span><br>`;
+        previewHTML += `<span style="margin-left: 20px; color: #e74c3c;">• ${wrongWords.join(', ')}</span>`;
+        previewHTML += `</div>`;
+    });
+    
+    // 총 그룹 수 표시
+    const groupCount = Object.keys(groupedDict).length;
+    if (groupCount > 0) {
+        previewHTML += `<hr style="margin: 15px 0; border: 1px solid #ddd;">`;
+        previewHTML += `<em style="color: #7f8c8d;">총 ${groupCount}개 그룹, ${Object.keys(mistranslationDict).length}개 오역 항목</em>`;
     }
+    
+    previewElement.innerHTML = previewHTML;
 }
 
-function downloadResult() {
-    const text = document.getElementById('processed-subtitle').value;
-    if (!text.trim()) {
-        alert('처리된 자막이 없습니다');
-        return;
-    }
-    
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'corrected_subtitle.srt';
-    a.click();
-    URL.revokeObjectURL(url);
-}
+
 // SRT 자막 생성 함수 추가
 function generateSRT(subtitles) {
     return subtitles.map(sub => 

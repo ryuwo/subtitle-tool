@@ -15,8 +15,8 @@
     <!-- 기존 body 내용 그대로 -->
     <div class="container">
         <header>
-            <h1>🎬 자막 오역 수정 도구</h1>
-            <p>Google Sheets 기반 자동 오역 수정 시스템</p>
+            <h1>⚡ FixSub</h1>
+            <p>Google Sheets 기반 오역 수정 시스템</p>
         </header>
 
         <main>
@@ -29,7 +29,7 @@
             </section>
 
             <section class="dictionary-section">
-                <h2>📚 오역 사전 현황</h2>
+                <h2>📑 오역 사전 현황</h2>
                 <div class="dict-info">
                     <span>현재 등록된 오역 항목: <strong id="dict-count">0</strong>개</span>
                     <button onclick="refreshDictionary()">새로고침</button>
@@ -38,10 +38,10 @@
             </section>
 
             <section class="process-section">
-    <h2>🎭 자막 파일 처리</h2>
+    <h2>✅ 자막 파일 처리</h2>
     <div class="file-upload">
         <input type="file" id="subtitle-file" accept=".srt,.vtt">
-        <button onclick="processFile()">자막 파일 처리하기</button>
+        <button onclick="processFile()">오류 탐색하기</button>
     </div>
     
     <div class="text-areas">
@@ -50,9 +50,9 @@
             <textarea id="original-subtitle" placeholder="자막 파일을 업로드하거나 여기에 붙여넣으세요"></textarea>
         </div>
         <div class="text-area-container">
-            <h3>수정된 대사 목록</h3>
+            <h3>수정이 필요한 목록</h3>
             <textarea id="processed-subtitle" readonly placeholder="수정된 대사들이 여기에 표시됩니다"></textarea>
-            <button onclick="downloadResult()">다운로드</button>
+            <button onclick="downloadResult()">수정본 다운로드</button>
         </div>
     </div>
     

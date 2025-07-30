@@ -46,14 +46,13 @@ section h2 {
     padding-bottom: 10px;
 }
 
-/* 기존의 input[type="text"] 부분을 찾아서 수정 */
 input[type="text"], input[type="file"] {
     padding: 10px;
     border: 2px solid #ddd;
     border-radius: 5px;
     margin-right: 10px;
     font-size: 14px;
-    width: 300px;  /* 이 줄 추가 - 너비 늘리기 */
+    width: 300px;  
     min-width: 100px;  /* 최소 너비 설정 */
 }
 
@@ -149,10 +148,10 @@ textarea {
     width: 60px;
     height: 60px;
     object-fit: contain;
-    border-radius: 8px;  /* 로고에 약간의 둥근 모서리 */
+    border-radius: 8px;  
 }
 
-/* 반응형 디자인 */
+
 @media (max-width: 768px) {
     .header-content {
         gap: 12px;

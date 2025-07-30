@@ -89,10 +89,7 @@ async function connectToSheets() {
     }
 }
 
-// 나머지 함수들은 기존과 동일하게 유지...
-// (refreshDictionary, processFile, processSubtitles 등 모든 함수)
 
-// 오역 사전 새로고침
 async function refreshDictionary() {
     if (!isConnected) {
         updateConnectionStatus('먼저 Google Sheets에 연결해주세요', 'error');
@@ -155,7 +152,6 @@ function processFile() {
     }
 }
 
-// 자막 오역 수정 (행번호 공백 검출 개선)
 function processSubtitles(srtContent) {
     if (Object.keys(mistranslationDict).length === 0) {
         updateConnectionStatus('오역 사전이 비어있습니다. 스프레드시트를 확인해주세요', 'error');
@@ -167,7 +163,7 @@ function processSubtitles(srtContent) {
     let autoFixCount = 0;
     const modifiedSubtitles = [];
     
-    // 원본 블록들을 먼저 분리 (공백 보존)
+    // 원본 블록들을 먼저 분리
     const originalBlocks = srtContent.trim().split(/\n\s*\n/);
     const subtitles = parseSRT(srtContent);
     
@@ -263,7 +259,7 @@ function processSubtitles(srtContent) {
     }
 }
 
-// SRT 자막 파싱 (행번호 공백 수정 포함)
+// SRT 자막 파싱
 function parseSRT(srtContent) {
     const subtitles = [];
     const blocks = srtContent.trim().split(/\n\s*\n/);
@@ -315,7 +311,6 @@ function downloadResult() {
         return;
     }
     
-    // 전체 자막 파일 다운로드 (기본값)
     downloadFile(fullText, 'corrected_subtitle.srt', 'text/plain');
 }
 
@@ -345,7 +340,7 @@ function updateConnectionStatus(message, type) {
     }
 }
 
-// 오역 사전 표시 (그룹별 표시 방식)
+// 오역 사전 표시
 function updateDictionaryDisplay() {
     const countElement = document.getElementById('dict-count');
     const previewElement = document.getElementById('dict-preview');

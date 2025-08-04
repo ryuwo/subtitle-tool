@@ -152,6 +152,7 @@ function processFile() {
     }
 }
 
+// 자막 오역 수정 (일본어 지원 개선)
 function processSubtitles(srtContent) {
     if (Object.keys(mistranslationDict).length === 0) {
         updateConnectionStatus('오역 사전이 비어있습니다. 스프레드시트를 확인해주세요', 'error');
@@ -163,7 +164,6 @@ function processSubtitles(srtContent) {
     let autoFixCount = 0;
     const modifiedSubtitles = [];
     
-    // 원본 블록들을 먼저 분리
     const originalBlocks = srtContent.trim().split(/\n\s*\n/);
     const subtitles = parseSRT(srtContent);
     
@@ -174,9 +174,19 @@ function processSubtitles(srtContent) {
         let hasAutoFix = false;
         const subtitleChanges = [];
         
-        // 1. 오역 사전 기반 수정
+        // 1. 오역 사전 기반 수정 (일본어 지원 개선)
         for (const [wrongWord, correctWord] of Object.entries(mistranslationDict)) {
-            const regex = new RegExp('\\b' + escapeRegExp(wrongWord) + '\\b', 'g');
+            // 일본어/한국어/중국어 등을 위한 정규식 (단어 경계 없이)
+            let regex;
+            
+            // 영어나 숫자로 시작하고 끝나는 경우에만 단어 경계 사용
+            if (/^[a-zA-Z0-9]/.test(wrongWord) && /[a-zA-Z0-9]$/.test(wrongWord)) {
+                regex = new RegExp('\\b' + escapeRegExp(wrongWord) + '\\b', 'g');
+            } else {
+                // 일본어, 한국어 등 CJK 문자는 단어 경계 없이 매칭
+                regex = new RegExp(escapeRegExp(wrongWord), 'g');
+            }
+            
             const matches = modifiedText.match(regex);
             
             if (matches) {
@@ -187,9 +197,8 @@ function processSubtitles(srtContent) {
             }
         }
         
-        // 2. 자동 수정 기능들
-        
-        // 2-1. 숫자 뒤 온점 추가 (마지막 단어가 숫자인 경우)
+        // 2. 자동 수정 기능들 (기존과 동일)
+        // 2-1. 숫자 뒤 온점 추가
         if (/(\b\d+)$/.test(modifiedText)) {
             modifiedText = modifiedText.replace(/(\b\d+)$/g, '$1.');
             hasAutoFix = true;
@@ -208,13 +217,11 @@ function processSubtitles(srtContent) {
         if (originalBlocks[index]) {
             const blockLines = originalBlocks[index].trim().split('\n');
             
-            // 행번호 공백 체크 (첫 번째 줄)
             if (blockLines[0] !== blockLines[0].trim()) {
                 hasAutoFix = true;
                 subtitleChanges.push('행번호 공백 제거');
             }
             
-            // 타임라인 공백 체크 (두 번째 줄)
             if (blockLines[1] && blockLines[1] !== blockLines[1].trim()) {
                 hasAutoFix = true;
                 subtitleChanges.push('타임라인 공백 제거');
@@ -258,6 +265,7 @@ function processSubtitles(srtContent) {
         updateConnectionStatus('수정할 내용이 발견되지 않았습니다', 'success');
     }
 }
+
 
 // SRT 자막 파싱
 function parseSRT(srtContent) {

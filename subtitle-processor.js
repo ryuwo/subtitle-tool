@@ -152,7 +152,7 @@ function processFile() {
     }
 }
 
-// 자막 오역 수정 (일본어 지원 개선)
+// 1단계: 오역 수정만 (한국어 검출 제거)
 function processSubtitles(srtContent) {
     if (Object.keys(mistranslationDict).length === 0) {
         updateConnectionStatus('오역 사전이 비어있습니다. 스프레드시트를 확인해주세요', 'error');
@@ -164,7 +164,7 @@ function processSubtitles(srtContent) {
     let autoFixCount = 0;
     const modifiedSubtitles = [];
     
-    const originalBlocks = srtContent.trim().split(/\n\s*\n/);
+    const originalBlocks = srtContent.trim().split(/\n\s*\n/); // 수정됨
     const subtitles = parseSRT(srtContent);
     
     subtitles.forEach((subtitle, index) => {
@@ -173,17 +173,14 @@ function processSubtitles(srtContent) {
         let hasChanges = false;
         let hasAutoFix = false;
         const subtitleChanges = [];
-        
-        // 1. 오역 사전 기반 수정 (일본어 지원 개선)
+
+        // 1. 오역 사전 기반 수정
         for (const [wrongWord, correctWord] of Object.entries(mistranslationDict)) {
-            // 일본어/한국어/중국어 등을 위한 정규식 (단어 경계 없이)
             let regex;
             
-            // 영어나 숫자로 시작하고 끝나는 경우에만 단어 경계 사용
             if (/^[a-zA-Z0-9]/.test(wrongWord) && /[a-zA-Z0-9]$/.test(wrongWord)) {
                 regex = new RegExp('\\b' + escapeRegExp(wrongWord) + '\\b', 'g');
             } else {
-                // 일본어, 한국어 등 CJK 문자는 단어 경계 없이 매칭
                 regex = new RegExp(escapeRegExp(wrongWord), 'g');
             }
             
@@ -197,15 +194,13 @@ function processSubtitles(srtContent) {
             }
         }
         
-        // 2. 자동 수정 기능들 (기존과 동일)
-        // 2-1. 숫자 뒤 온점 추가
+        // 2. 자동 수정 기능들
         if (/(\b\d+)$/.test(modifiedText)) {
             modifiedText = modifiedText.replace(/(\b\d+)$/g, '$1.');
             hasAutoFix = true;
             subtitleChanges.push('숫자 뒤 온점 추가');
         }
         
-        // 2-2. 텍스트 앞뒤 공백 제거
         const trimmedText = modifiedText.trim();
         if (trimmedText !== modifiedText) {
             modifiedText = trimmedText;
@@ -213,22 +208,24 @@ function processSubtitles(srtContent) {
             subtitleChanges.push('텍스트 공백 정리');
         }
         
-        // 3. 원본 블록에서 행번호/타임라인 공백 체크
-        if (originalBlocks[index]) {
-            const blockLines = originalBlocks[index].trim().split('\n');
-            
-            if (blockLines[0] !== blockLines[0].trim()) {
-                hasAutoFix = true;
-                subtitleChanges.push('행번호 공백 제거');
-            }
-            
-            if (blockLines[1] && blockLines[1] !== blockLines[1].trim()) {
-                hasAutoFix = true;
-                subtitleChanges.push('타임라인 공백 제거');
-            }
-        }
+        // 3. 행번호/타임라인 공백 체크 - 완전히 수정됨
+if (originalBlocks[index]) {
+    const blockLines = originalBlocks[index].trim().split('\n');
+    
+    // 행번호(첫 번째 줄) 공백 체크 - 수정됨
+if (blockLines[0] && blockLines[0] !== blockLines[0].trim()) {
+        hasAutoFix = true;
+        subtitleChanges.push('행번호 공백 제거');
+    }
+    
+    // 타임라인(두 번째 줄) 공백 체크  
+    if (blockLines[1] && blockLines[1] !== blockLines[1].trim()) {
+        hasAutoFix = true;
+        subtitleChanges.push('타임라인 공백 제거');
+    }
+}
+
         
-        // 수정사항이 있으면 기록
         if (hasChanges || hasAutoFix) {
             if (hasAutoFix) autoFixCount++;
             
@@ -250,7 +247,7 @@ function processSubtitles(srtContent) {
     
     // 결과 메시지
     if (changesCount > 0 || autoFixCount > 0) {
-        let statusMessage = `처리 완료: `;
+        let statusMessage = `1단계 완료: `;
         if (changesCount > 0) {
             statusMessage += `${changesCount}개 오역 수정`;
         }
@@ -262,23 +259,139 @@ function processSubtitles(srtContent) {
         
         updateConnectionStatus(statusMessage, 'success');
     } else {
-        updateConnectionStatus('수정할 내용이 발견되지 않았습니다', 'success');
+        updateConnectionStatus('1단계 완료: 수정할 내용이 발견되지 않았습니다', 'success');
     }
+}
+
+
+
+
+// 🆕 2단계: 한국어 검출 함수
+function detectKoreanInSubtitles(srtContent) {
+    const koreanPattern = /[가-힣ㄱ-ㅎㅏ-ㅣ]/;
+    const warnings = [];
+    const subtitles = parseSRT(srtContent);
+    
+    subtitles.forEach(subtitle => {
+        if (koreanPattern.test(subtitle.text)) {
+            warnings.push(`${subtitle.id} ${subtitle.time}\n${subtitle.text}[ ⚠️ ] 한국어 검출`);
+        }
+    });
+    
+    return warnings;
+}
+
+// 🆕 2단계: 세그먼트 번호 검사 함수
+function checkSegmentNumbers(subtitles) {
+    const issues = [];
+    const segmentIds = [];
+    
+    subtitles.forEach((subtitle, index) => {
+        const id = parseInt(subtitle.id);
+        const expected = index + 1;
+        
+        // 중복 검사
+        if (segmentIds.includes(id)) {
+            issues.push(`중복: ${id}번 (${index + 1}번째 위치)`);
+        } else {
+            segmentIds.push(id);
+        }
+        
+        // 순서 검사
+        if (id !== expected) {
+            issues.push(`순서 오류: ${index + 1}번째 위치에 ${id}번 (예상: ${expected}번)`);
+        }
+    });
+    
+    return issues;
+}
+
+// 🆕 2단계: 검수 메인 함수
+function validateSubtitles(srtContent) {
+    const subtitles = parseSRT(srtContent);
+    const koreanWarnings = detectKoreanInSubtitles(srtContent);
+    const segmentIssues = checkSegmentNumbers(subtitles);
+    
+    let resultText = '=== 자막 검수 결과 ===\n\n';
+    
+    // 한국어 검출 결과
+    if (koreanWarnings.length > 0) {
+        resultText += `🇰🇷 한국어 검출 (${koreanWarnings.length}개):\n`;
+        resultText += '─'.repeat(50) + '\n';
+        koreanWarnings.forEach(warning => {
+            resultText += warning + '\n';
+            resultText += '─'.repeat(30) + '\n';
+        });
+        resultText += '\n';
+    }
+    
+    // 세그먼트 번호 검사 결과
+    if (segmentIssues.length > 0) {
+        resultText += `📊 세그먼트 번호 문제 (${segmentIssues.length}개):\n`;
+        resultText += '─'.repeat(50) + '\n';
+        segmentIssues.forEach(issue => {
+            resultText += `• ${issue}\n`;
+        });
+        resultText += '\n';
+    }
+    
+    // 종합 결과
+    const totalIssues = koreanWarnings.length + segmentIssues.length;
+    if (totalIssues === 0) {
+        resultText += '✅ 검수 완료: 문제점이 발견되지 않았습니다.';
+    } else {
+        resultText += `⚠️ 검수 완료: 총 ${totalIssues}개 문제점 발견`;
+    }
+    
+    return resultText;
+}
+
+// 🆕 2단계: 파일 검수 처리 함수
+function validateFile() {
+    const fileInput = document.getElementById('validation-file');
+    
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const content = e.target.result;
+            const result = validateSubtitles(content);
+            document.getElementById('validation-result').value = result;
+        };
+        
+        reader.readAsText(file, 'utf-8');
+    } else {
+        alert('검수할 자막 파일을 선택해주세요');
+    }
+}
+
+// 🆕 2단계: 1단계 결과 검수 함수
+function validateFromStep1() {
+    const correctedContent = document.getElementById('full-corrected-subtitle').value;
+    
+    if (!correctedContent.trim()) {
+        alert('먼저 1단계에서 자막을 처리해주세요');
+        return;
+    }
+    
+    const result = validateSubtitles(correctedContent);
+    document.getElementById('validation-result').value = result;
 }
 
 
 // SRT 자막 파싱
 function parseSRT(srtContent) {
     const subtitles = [];
-    const blocks = srtContent.trim().split(/\n\s*\n/);
+    const blocks = srtContent.trim().split(/\n\s*\n/); // 수정됨
     
     blocks.forEach(block => {
-        const lines = block.trim().split('\n');
+        const lines = block.trim().split('\n'); // 수정됨
         if (lines.length >= 3) {
             const subtitle = {
-                id: lines[0].trim(), // 행번호 앞뒤 공백 제거
-                time: lines[1].trim(), // 타임라인 앞뒤 공백 제거
-                text: lines.slice(2).join('\n')
+                id: lines[0].trim(),
+                time: lines[1].trim(),
+                text: lines.slice(2).join('\n') // 수정됨
             };
             subtitles.push(subtitle);
         }
@@ -286,6 +399,7 @@ function parseSRT(srtContent) {
     
     return subtitles;
 }
+
 
 
 // 수정된 자막만 표시하는 함수
@@ -392,4 +506,68 @@ function generateSRT(subtitles) {
     return subtitles.map(sub => 
         `${sub.id}\n${sub.time}\n${sub.text}`
     ).join('\n\n');
+}
+
+// 한국어 검출 기능
+function DetectKorean(text) {
+   const Koreanpattern = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
+   return Koreanpattern.test(text);
+}
+// 3단계: 화자 누락 검출 함수
+function detectMissingSpeakers(srtContent) {
+    const warnings = [];
+    const subtitles = parseSRT(srtContent);
+    
+    subtitles.forEach(subtitle => {
+        const text = subtitle.text.trim();
+        if (!text) return; // 빈 대사는 무시
+        if (!text.includes(':')) {
+            // 콜론이 없으면 화자 누락으로 간주
+            warnings.push(`${subtitle.id} ${subtitle.time}\n${text}[ ⚠️ ] 화자 누락`);
+        }
+    });
+    return warnings;
+}
+
+// 3단계: 검수 결과 표시 함수 (화자 누락만 간단히)
+function displaySpeakerCheckResult(warnings) {
+    let resultText = '=== 화자 누락 검사 결과 ===\n\n';
+    if (warnings.length === 0) {
+        resultText += '✅ 검사 완료: 화자 누락이 발견되지 않았습니다.';
+    } else {
+        resultText += `⚠️ 화자 누락 발견 (${warnings.length}개):\n`;
+        resultText += '─'.repeat(60) + '\n';
+        warnings.forEach(warning => {
+            resultText += warning + '\n' + '─'.repeat(40) + '\n';
+        });
+    }
+    return resultText;
+}
+
+// 3단계: 새 파일로 화자 검사
+function checkSpeakers() {
+    const fileInput = document.getElementById('speaker-file');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const content = e.target.result;
+            const warnings = detectMissingSpeakers(content);
+            document.getElementById('speaker-result').value = displaySpeakerCheckResult(warnings);
+        };
+        reader.readAsText(file, 'utf-8');
+    } else {
+        alert('검사할 자막 파일을 선택해주세요');
+    }
+}
+
+// 3단계: 이전 단계 결과로 화자 검사
+function checkSpeakersFromPrevious() {
+    const content = document.getElementById('full-corrected-subtitle').value;
+    if (!content.trim()) {
+        alert('먼저 이전 단계에서 자막을 처리해주세요');
+        return;
+    }
+    const warnings = detectMissingSpeakers(content);
+    document.getElementById('speaker-result').value = displaySpeakerCheckResult(warnings);
 }

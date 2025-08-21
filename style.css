@@ -33,6 +33,7 @@ header h1 {
 
 section {
     background: white;
+    border-left: 4px solid #17a2b8;
     margin-bottom: 20px;
     padding: 25px;
     border-radius: 10px;
@@ -165,4 +166,58 @@ textarea {
 .header-content h1 {
     margin-top: 8px;  /* 이 값을 조정해서 아래로 이동 */
     margin-bottom: 0;
+}
+
+/* 검수 섹션 스타일 추가 */
+.validation-section {
+    background: #f8f9fa;
+    border-left: 4px solid #17b86a;
+}
+
+.validation-upload {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.validation-result {
+    margin-top: 20px;
+}
+
+.validation-result textarea {
+    background-color: #fff;
+    border: 2px solid #17a2b8;
+}
+
+/* 화자 검사 섹션 스타일 추가 */
+.speaker-section {
+    background: #ffffff;
+    border-left: 4px solid #ffc107;
+}
+
+.speaker-upload {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.speaker-result {
+    margin-top: 20px;
+}
+
+.speaker-result textarea {
+    background-color: #fff;
+    border: 2px solid #ffffff;
+    height: 250px;
+}
+
+/* 3단계 버튼 특별 스타일 */
+.speaker-upload button:nth-child(3) {
+    background-color: #28a745;
+}
+
+.speaker-upload button:nth-child(3):hover {
+    background-color: #218838;
 }

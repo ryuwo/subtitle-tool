@@ -41,7 +41,7 @@
             </section>
 
             <section class="process-section">
-    <h2>✅ 자막 파일 처리</h2>
+    <h2>🔍 자막 오표기 수정 (1단계)</h2>
     <div class="file-upload">
         <input type="file" id="subtitle-file" accept=".srt,.vtt">
         <button onclick="processFile()">오류 탐색하기</button>
@@ -50,11 +50,11 @@
     <div class="text-areas">
         <div class="text-area-container">
             <h3>원본 자막</h3>
-            <textarea id="original-subtitle" placeholder="자막 파일을 업로드하거나 여기에 붙여넣으세요"></textarea>
+            <textarea id="original-subtitle" placeholder="자막 파일을 업로드하세요"></textarea>
         </div>
         <div class="text-area-container">
-            <h3>수정이 필요한 목록</h3>
-            <textarea id="processed-subtitle" readonly placeholder="수정된 대사들이 여기에 표시됩니다"></textarea>
+            <h3>수정 목록</h3>
+            <textarea id="processed-subtitle" readonly placeholder="수정된 오표기 목록이 표시됩니다"></textarea>
             <button onclick="downloadResult()">수정본 다운로드</button>
         </div>
     </div>
@@ -62,6 +62,60 @@
     <!-- 전체 수정된 자막 저장용 (숨겨진 textarea) -->
     <textarea id="full-corrected-subtitle" style="display: none;"></textarea>
 </section>
+
+    <section class="validation-section">
+        <h2>🔍 Segment 검수 (2단계)</h2>
+        <div class="validation-upload">
+            <input type="file" id="validation-file" accept=".srt,.vtt">
+            <button onclick="validateFile()">검수하기</button>
+            <button onclick="validateFromStep1()" style="background-color: #27ae60;">1단계 결과 검수</button>
+        </div>
+    
+        <div class="validation-result">
+            <h3>검수 결과</h3>
+            <textarea id="validation-result" readonly placeholder="Segment 누락, Segment 분리, 한국어 여부를 확인할 수 있습니다. 
+검출될 시 직접 수정해주세요.
+
+ ❗️ Segment는 1번부터 시작되어야 합니다 ❗️
+
+잘못된 예시)
+1
+00:00:33,500 --> 00:00:35,835
+An era of injustice.
+3   
+00:00:36,736 --> 00:00:38,204
+제발!   
+
+⬆️ 한국어 검출, segment 분리 여부, 2번 segment 누락 검출 대상
+
+            "></textarea>
+        </div>
+        </section>
+
+<section class="speaker-section">
+    <h2>🔍 드라마 화자 누락 검출 (3단계)</h2>
+    <div class="speaker-upload">
+        <input type="file" id="speaker-file" accept=".srt,.vtt">
+        <button onclick="checkSpeakers()">화자 누락 검사</button>
+        <button onclick="checkSpeakersFromPrevious()" style="background-color: #28a745;">이전 단계 결과 검사</button>
+    </div>
+    <div class="speaker-result">
+        <h3>화자 누락 검사 결과</h3>
+        <textarea id="speaker-result" readonly placeholder="화자 누락 검사 결과가 여기에 표시됩니다
+
+잘못된 예시)
+1
+00:00:33,500 --> 00:00:35,835
+An era of injustice.
+
+⬇️ 화자 누락: 수정 필요
+
+1
+00:00:33,500 --> 00:00:35,835
+Kang Dong-ju: An era of injustice."></textarea>
+    </div>
+</section>
+
 
         </main>
     </div>

@@ -117,6 +117,33 @@ Kang Dong-ju: An era of injustice."></textarea>
 </section>
 
 
+<!-- 4단계: 원어민 수정안 적용 블록 -->
+<section class="revision-section">
+    <h2>📝 원어민 수정안 적용 (4단계: 최종 검수)</h2>
+    <div class="revision-upload">
+        <input type="file" id="revision-file" accept=".srt,.vtt">
+        <button onclick="applyRevisions()">수정안 적용</button>
+    </div>
+    
+    <div class="revision-result">
+        <h3>수정안 적용 결과</h3>
+        <textarea id="revision-result" readonly placeholder="수정안 적용 결과가 여기에 표시됩니다.
+        교체 예시)
+
+1
+00:00:33,500 --> 00:00:35,835
+Kang Dong-ju: A era of injustice.
+* An era of injustice.
+
+⬇️ 코드 돌리면 * 뒤 문장으로 교체됩니다.
+
+1
+00:00:33,500 --> 00:00:35,835
+Kang Dong-ju: An era of injustice."></textarea>
+    </div>
+</section>
+
+
         </main>
     </div>
 

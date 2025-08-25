@@ -221,3 +221,35 @@ textarea {
 .speaker-upload button:nth-child(3):hover {
     background-color: #218838;
 }
+
+/* 4단계 수정안 섹션 스타일 */
+.revision-section {
+    background: #f8f0ff;
+    border-left: 4px solid #6f42c1;
+}
+
+.revision-upload {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.revision-result {
+    margin-top: 20px;
+}
+
+.revision-result textarea {
+    background-color: #fff;
+    border: 2px solid #6f42c1;
+    height: 250px;
+}
+
+/* 4단계 버튼 특별 스타일 */
+.revision-upload button:nth-child(3) {
+    background-color: #6f42c1;
+}
+
+.revision-upload button:nth-child(3):hover {
+    background-color: #5a2d91;
+}

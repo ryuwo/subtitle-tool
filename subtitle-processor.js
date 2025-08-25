@@ -571,3 +571,112 @@ function checkSpeakersFromPrevious() {
     const warnings = detectMissingSpeakers(content);
     document.getElementById('speaker-result').value = displaySpeakerCheckResult(warnings);
 }
+
+// 4단계: 대사 수정안 교체 함수
+function processRevisions(srtContent) {
+    const subtitles = parseSRT(srtContent);
+    let changesCount = 0;
+    const revisedSubtitles = [];
+    
+    subtitles.forEach(subtitle => {
+        const text = subtitle.text;
+        
+        // * 표시가 있는 수정안 찾기
+        if (text.includes('*')) {
+            const lines = text.split('\n');
+            let originalLine = '';
+            let revisedLine = '';
+            
+            // 원본 라인과 수정안 라인 찾기
+            for (let line of lines) {
+                if (line.trim().startsWith('*')) {
+                    revisedLine = line.trim().substring(1).trim(); // * 제거
+                } else if (line.trim() && !line.trim().startsWith('*')) {
+                    originalLine = line.trim();
+                }
+            }
+            
+            // 수정안이 있으면 교체
+            if (originalLine && revisedLine) {
+                subtitle.text = originalLine.replace(originalLine, revisedLine);
+                changesCount++;
+                
+                revisedSubtitles.push({
+                    id: subtitle.id,
+                    time: subtitle.time,
+                    originalText: originalLine,
+                    revisedText: revisedLine
+                });
+            }
+        }
+    });
+    
+    return {
+        subtitles: subtitles,
+        revisedSubtitles: revisedSubtitles,
+        changesCount: changesCount
+    };
+}
+
+// 4단계: 수정안 적용 메인 함수
+function applyRevisions() {
+    const fileInput = document.getElementById('revision-file');
+    const originalTextArea = document.getElementById('original-subtitle');
+    
+    let content = '';
+    
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            content = e.target.result;
+            processRevisionsContent(content);
+        };
+        
+        reader.readAsText(file, 'utf-8');
+    } else if (originalTextArea.value.trim()) {
+        content = originalTextArea.value;
+        processRevisionsContent(content);
+    } else {
+        alert('수정안이 포함된 자막 파일을 선택하거나 텍스트를 입력해주세요');
+    }
+}
+
+function processRevisionsContent(srtContent) {
+    const result = processRevisions(srtContent);
+    
+    if (result.changesCount > 0) {
+        // 수정된 자막 생성
+        const correctedContent = generateSRT(result.subtitles);
+        
+        // 결과 표시
+        displayRevisionResults(result.revisedSubtitles);
+        document.getElementById('full-corrected-subtitle').value = correctedContent;
+        
+        updateConnectionStatus(`4단계 완료: ${result.changesCount}개 수정안 적용 (총 ${result.revisedSubtitles.length}개 대사 수정)`, 'success');
+    } else {
+        updateConnectionStatus('4단계 완료: 적용할 수정안이 발견되지 않았습니다', 'success');
+    }
+}
+
+// 수정안 적용 결과 표시
+function displayRevisionResults(revisedSubtitles) {
+    const processedTextArea = document.getElementById('processed-subtitle');
+    
+    if (revisedSubtitles.length === 0) {
+        processedTextArea.value = '적용된 수정안이 없습니다.';
+        return;
+    }
+    
+    let displayText = '=== 적용된 수정안 목록 ===\n\n';
+    
+    revisedSubtitles.forEach((subtitle, index) => {
+        displayText += `${index + 1}. [${subtitle.id}] ${subtitle.time}\n`;
+        displayText += `원본: ${subtitle.originalText}\n`;
+        displayText += `수정: ${subtitle.revisedText}\n`;
+        displayText += '─'.repeat(50) + '\n\n';
+    });
+    
+    processedTextArea.value = displayText;
+}

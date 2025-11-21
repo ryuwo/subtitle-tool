@@ -253,3 +253,64 @@ textarea {
 .revision-upload button:nth-child(3):hover {
     background-color: #5a2d91;
 }
+
+/* 언어 버튼 스타일 */
+.language-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.lang-btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: all 0.3s;
+    min-width: 140px;
+}
+
+.lang-jp {
+    background-color: #e74c3c;
+    border: 2px solid #c0392b;
+}
+
+.lang-jp:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.lang-cn {
+    background-color: #e67e22;
+    border: 2px solid #d35400;
+}
+
+.lang-cn:hover {
+    background-color: #d35400;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.lang-en {
+    background-color: #3498db;
+    border: 2px solid #2980b9;
+}
+
+.lang-en:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+    .language-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .lang-btn {
+        width: 100%;
+    }
+}

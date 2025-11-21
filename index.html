@@ -26,8 +26,11 @@
         
             <section class="connection-section">
                 <h2>📊 Google Sheets 연결</h2>
-                <input type="text" id="spreadsheet-url" placeholder="Google Sheets 공유 링크를 붙여넣으세요">
-                <button onclick="connectToSheets()">연결하기</button>
+                <div class="language-buttons">
+                    <button onclick="connectToLanguageSheet('japanese')" class="lang-btn lang-jp">🇯🇵 일본어</button>
+                    <button onclick="connectToLanguageSheet('chinese')" class="lang-btn lang-cn">🇨🇳 중국어</button>
+                    <button onclick="connectToLanguageSheet('english')" class="lang-btn lang-en">🇺🇸 영어</button>
+                </div>
                 <div id="connection-status" class="status"></div>
             </section>
 
@@ -117,29 +120,23 @@ Kang Dong-ju: An era of injustice."></textarea>
 </section>
 
 
-<!-- 4단계: 원어민 수정안 적용 블록 -->
+<!-- 4단계: 자동 수정 블록 -->
 <section class="revision-section">
-    <h2>📝 원어민 수정안 적용 (4단계: 최종 검수)</h2>
+    <h2>🔧 자동 수정 (4단계: 최종 검수)</h2>
     <div class="revision-upload">
         <input type="file" id="revision-file" accept=".srt,.vtt">
-        <button onclick="applyRevisions()">수정안 적용</button>
+        <button onclick="applyAutoCorrections()">자동 수정 실행</button>
     </div>
-    
+
     <div class="revision-result">
-        <h3>수정안 적용 결과</h3>
-        <textarea id="revision-result" readonly placeholder="수정안 적용 결과가 여기에 표시됩니다.
-        교체 예시)
+        <h3>자동 수정 결과</h3>
+        <textarea id="revision-result" readonly placeholder="자동 수정 결과가 여기에 표시됩니다.
 
-1
-00:00:33,500 --> 00:00:35,835
-Kang Dong-ju: A era of injustice.
-* An era of injustice.
-
-⬇️ 코드 돌리면 * 뒤 문장으로 교체됩니다.
-
-1
-00:00:33,500 --> 00:00:35,835
-Kang Dong-ju: An era of injustice."></textarea>
+자동 수정 항목:
+1. 숫자 뒤 온점 추가 (예: 1 → 1.)
+2. 텍스트 앞뒤 공백 정리
+3. 행번호 공백 제거
+4. 타임라인 공백 제거"></textarea>
     </div>
 </section>
 

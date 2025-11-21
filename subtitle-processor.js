@@ -33,49 +33,43 @@ function initializeGoogleAPI() {
     });
 }
 
-// Google Sheets 공유 링크에서 ID 추출
-function extractSpreadsheetId(url) {
-    const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-    return match ? match[1] : null;
-}
-
-// Google Sheets 연결 (API 초기화 확인 추가)
-async function connectToSheets() {
+// 언어별 Google Sheets 연결 (새로운 함수)
+async function connectToLanguageSheet(language) {
     if (!apiInitialized) {
         updateConnectionStatus('Google API가 아직 초기화되지 않았습니다. 잠시 후 다시 시도해주세요.', 'error');
         return;
     }
 
-    const sheetUrl = document.getElementById('spreadsheet-url').value.trim();
-    
-    if (!sheetUrl) {
-        updateConnectionStatus('Google Sheets 공유 링크를 입력해주세요', 'error');
-        return;
-    }
-    
-    const spreadsheetId = extractSpreadsheetId(sheetUrl);
+    const spreadsheetId = CONFIG.SPREADSHEET_IDS[language];
+
     if (!spreadsheetId) {
-        updateConnectionStatus('올바른 Google Sheets 공유 링크를 입력해주세요', 'error');
+        updateConnectionStatus('해당 언어의 시트 ID가 설정되지 않았습니다', 'error');
         return;
     }
-    
+
     try {
-        updateConnectionStatus('연결 중...', 'success');
-        
+        const languageNames = {
+            japanese: '일본어',
+            chinese: '중국어',
+            english: '영어'
+        };
+
+        updateConnectionStatus(`${languageNames[language]} 시트 연결 중...`, 'success');
+
         // 스프레드시트 접근 테스트
-        const response = await gapi.client.sheets.spreadsheets.values.get({
+        await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: spreadsheetId,
             range: 'A1:B1',
         });
-        
+
         isConnected = true;
         currentSpreadsheetId = spreadsheetId;
-        updateConnectionStatus('연결 성공!', 'success');
+        updateConnectionStatus(`${languageNames[language]} 시트 연결 성공!`, 'success');
         refreshDictionary();
-        
+
     } catch (error) {
         console.error('연결 실패:', error);
-        
+
         let errorMessage = '연결 실패: ';
         if (error.status === 400) {
             errorMessage += 'API 키 설정을 확인해주세요';
@@ -84,7 +78,7 @@ async function connectToSheets() {
         } else {
             errorMessage += error.result?.error?.message || '알 수 없는 오류';
         }
-        
+
         updateConnectionStatus(errorMessage, 'error');
     }
 }
@@ -152,40 +146,37 @@ function processFile() {
     }
 }
 
-// 1단계: 오역 수정만 (한국어 검출 제거)
+// 1단계: 오역 수정만 (자동 수정 기능 제거)
 function processSubtitles(srtContent) {
     if (Object.keys(mistranslationDict).length === 0) {
         updateConnectionStatus('오역 사전이 비어있습니다. 스프레드시트를 확인해주세요', 'error');
         return;
     }
-    
+
     let correctedContent = srtContent;
     let changesCount = 0;
-    let autoFixCount = 0;
     const modifiedSubtitles = [];
-    
-    const originalBlocks = srtContent.trim().split(/\n\s*\n/); // 수정됨
+
     const subtitles = parseSRT(srtContent);
-    
-    subtitles.forEach((subtitle, index) => {
+
+    subtitles.forEach((subtitle) => {
         let originalText = subtitle.text;
         let modifiedText = originalText;
         let hasChanges = false;
-        let hasAutoFix = false;
         const subtitleChanges = [];
 
-        // 1. 오역 사전 기반 수정
+        // 오역 사전 기반 수정
         for (const [wrongWord, correctWord] of Object.entries(mistranslationDict)) {
             let regex;
-            
+
             if (/^[a-zA-Z0-9]/.test(wrongWord) && /[a-zA-Z0-9]$/.test(wrongWord)) {
                 regex = new RegExp('\\b' + escapeRegExp(wrongWord) + '\\b', 'g');
             } else {
                 regex = new RegExp(escapeRegExp(wrongWord), 'g');
             }
-            
+
             const matches = modifiedText.match(regex);
-            
+
             if (matches) {
                 hasChanges = true;
                 changesCount += matches.length;
@@ -193,42 +184,8 @@ function processSubtitles(srtContent) {
                 modifiedText = modifiedText.replace(regex, correctWord);
             }
         }
-        
-        // 2. 자동 수정 기능들
-        if (/(\b\d+)$/.test(modifiedText)) {
-            modifiedText = modifiedText.replace(/(\b\d+)$/g, '$1.');
-            hasAutoFix = true;
-            subtitleChanges.push('숫자 뒤 온점 추가');
-        }
-        
-        const trimmedText = modifiedText.trim();
-        if (trimmedText !== modifiedText) {
-            modifiedText = trimmedText;
-            hasAutoFix = true;
-            subtitleChanges.push('텍스트 공백 정리');
-        }
-        
-        // 3. 행번호/타임라인 공백 체크 - 완전히 수정됨
-if (originalBlocks[index]) {
-    const blockLines = originalBlocks[index].trim().split('\n');
-    
-    // 행번호(첫 번째 줄) 공백 체크 - 수정됨
-if (blockLines[0] && blockLines[0] !== blockLines[0].trim()) {
-        hasAutoFix = true;
-        subtitleChanges.push('행번호 공백 제거');
-    }
-    
-    // 타임라인(두 번째 줄) 공백 체크  
-    if (blockLines[1] && blockLines[1] !== blockLines[1].trim()) {
-        hasAutoFix = true;
-        subtitleChanges.push('타임라인 공백 제거');
-    }
-}
 
-        
-        if (hasChanges || hasAutoFix) {
-            if (hasAutoFix) autoFixCount++;
-            
+        if (hasChanges) {
             modifiedSubtitles.push({
                 id: subtitle.id,
                 time: subtitle.time,
@@ -237,27 +194,17 @@ if (blockLines[0] && blockLines[0] !== blockLines[0].trim()) {
                 changes: subtitleChanges
             });
         }
-        
+
         subtitle.text = modifiedText;
     });
-    
+
     correctedContent = generateSRT(subtitles);
     displayModifiedSubtitles(modifiedSubtitles);
     document.getElementById('full-corrected-subtitle').value = correctedContent;
-    
+
     // 결과 메시지
-    if (changesCount > 0 || autoFixCount > 0) {
-        let statusMessage = `1단계 완료: `;
-        if (changesCount > 0) {
-            statusMessage += `${changesCount}개 오역 수정`;
-        }
-        if (autoFixCount > 0) {
-            if (changesCount > 0) statusMessage += `, `;
-            statusMessage += `${autoFixCount}개 자동 수정`;
-        }
-        statusMessage += ` (총 ${modifiedSubtitles.length}개 자막 수정)`;
-        
-        updateConnectionStatus(statusMessage, 'success');
+    if (changesCount > 0) {
+        updateConnectionStatus(`1단계 완료: ${changesCount}개 오역 수정 (총 ${modifiedSubtitles.length}개 자막 수정)`, 'success');
     } else {
         updateConnectionStatus('1단계 완료: 수정할 내용이 발견되지 않았습니다', 'success');
     }
@@ -572,111 +519,115 @@ function checkSpeakersFromPrevious() {
     document.getElementById('speaker-result').value = displaySpeakerCheckResult(warnings);
 }
 
-// 4단계: 대사 수정안 교체 함수
-function processRevisions(srtContent) {
-    const subtitles = parseSRT(srtContent);
-    let changesCount = 0;
-    const revisedSubtitles = [];
-    
-    subtitles.forEach(subtitle => {
-        const text = subtitle.text;
-        
-        // * 표시가 있는 수정안 찾기
-        if (text.includes('*')) {
-            const lines = text.split('\n');
-            let originalLine = '';
-            let revisedLine = '';
-            
-            // 원본 라인과 수정안 라인 찾기
-            for (let line of lines) {
-                if (line.trim().startsWith('*')) {
-                    revisedLine = line.trim().substring(1).trim(); // * 제거
-                } else if (line.trim() && !line.trim().startsWith('*')) {
-                    originalLine = line.trim();
-                }
-            }
-            
-            // 수정안이 있으면 교체
-            if (originalLine && revisedLine) {
-                subtitle.text = originalLine.replace(originalLine, revisedLine);
-                changesCount++;
-                
-                revisedSubtitles.push({
-                    id: subtitle.id,
-                    time: subtitle.time,
-                    originalText: originalLine,
-                    revisedText: revisedLine
-                });
-            }
-        }
-    });
-    
-    return {
-        subtitles: subtitles,
-        revisedSubtitles: revisedSubtitles,
-        changesCount: changesCount
-    };
-}
-
-// 4단계: 수정안 적용 메인 함수
-function applyRevisions() {
+// 4단계: 자동 수정 함수
+function applyAutoCorrections() {
     const fileInput = document.getElementById('revision-file');
-    const originalTextArea = document.getElementById('original-subtitle');
-    
-    let content = '';
-    
+
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
         const reader = new FileReader();
-        
+
         reader.onload = function(e) {
-            content = e.target.result;
-            processRevisionsContent(content);
+            const content = e.target.result;
+            processAutoCorrections(content);
         };
-        
+
         reader.readAsText(file, 'utf-8');
-    } else if (originalTextArea.value.trim()) {
-        content = originalTextArea.value;
-        processRevisionsContent(content);
     } else {
-        alert('수정안이 포함된 자막 파일을 선택하거나 텍스트를 입력해주세요');
+        alert('자막 파일을 선택해주세요');
     }
 }
 
-function processRevisionsContent(srtContent) {
-    const result = processRevisions(srtContent);
-    
-    if (result.changesCount > 0) {
-        // 수정된 자막 생성
-        const correctedContent = generateSRT(result.subtitles);
-        
-        // 결과 표시
-        displayRevisionResults(result.revisedSubtitles);
-        document.getElementById('full-corrected-subtitle').value = correctedContent;
-        
-        updateConnectionStatus(`4단계 완료: ${result.changesCount}개 수정안 적용 (총 ${result.revisedSubtitles.length}개 대사 수정)`, 'success');
+function processAutoCorrections(srtContent) {
+    let autoFixCount = 0;
+    const modifiedSubtitles = [];
+
+    const originalBlocks = srtContent.trim().split(/\n\s*\n/);
+    const subtitles = parseSRT(srtContent);
+
+    subtitles.forEach((subtitle, index) => {
+        let originalText = subtitle.text;
+        let modifiedText = originalText;
+        let hasAutoFix = false;
+        const subtitleChanges = [];
+
+        // 1. 숫자 뒤 온점 추가
+        if (/(\b\d+)$/.test(modifiedText)) {
+            modifiedText = modifiedText.replace(/(\b\d+)$/g, '$1.');
+            hasAutoFix = true;
+            subtitleChanges.push('숫자 뒤 온점 추가');
+        }
+
+        // 2. 텍스트 공백 정리
+        const trimmedText = modifiedText.trim();
+        if (trimmedText !== modifiedText) {
+            modifiedText = trimmedText;
+            hasAutoFix = true;
+            subtitleChanges.push('텍스트 공백 정리');
+        }
+
+        // 3. 행번호/타임라인 공백 체크
+        if (originalBlocks[index]) {
+            const blockLines = originalBlocks[index].trim().split('\n');
+
+            // 행번호(첫 번째 줄) 공백 체크
+            if (blockLines[0] && blockLines[0] !== blockLines[0].trim()) {
+                hasAutoFix = true;
+                subtitleChanges.push('행번호 공백 제거');
+            }
+
+            // 타임라인(두 번째 줄) 공백 체크
+            if (blockLines[1] && blockLines[1] !== blockLines[1].trim()) {
+                hasAutoFix = true;
+                subtitleChanges.push('타임라인 공백 제거');
+            }
+        }
+
+        if (hasAutoFix) {
+            autoFixCount++;
+
+            modifiedSubtitles.push({
+                id: subtitle.id,
+                time: subtitle.time,
+                originalText: originalText,
+                modifiedText: modifiedText,
+                changes: subtitleChanges
+            });
+        }
+
+        subtitle.text = modifiedText;
+    });
+
+    const correctedContent = generateSRT(subtitles);
+    displayAutoCorrectResults(modifiedSubtitles);
+    document.getElementById('full-corrected-subtitle').value = correctedContent;
+
+    // 결과 메시지
+    if (autoFixCount > 0) {
+        updateConnectionStatus(`4단계 완료: ${autoFixCount}개 자동 수정 (총 ${modifiedSubtitles.length}개 자막 수정)`, 'success');
     } else {
-        updateConnectionStatus('4단계 완료: 적용할 수정안이 발견되지 않았습니다', 'success');
+        updateConnectionStatus('4단계 완료: 수정할 내용이 발견되지 않았습니다', 'success');
     }
 }
 
-// 수정안 적용 결과 표시
-function displayRevisionResults(revisedSubtitles) {
-    const processedTextArea = document.getElementById('processed-subtitle');
-    
-    if (revisedSubtitles.length === 0) {
-        processedTextArea.value = '적용된 수정안이 없습니다.';
+// 자동 수정 결과 표시
+function displayAutoCorrectResults(modifiedSubtitles) {
+    const resultTextArea = document.getElementById('revision-result');
+
+    if (modifiedSubtitles.length === 0) {
+        resultTextArea.value = '자동 수정된 내용이 없습니다.';
         return;
     }
-    
-    let displayText = '=== 적용된 수정안 목록 ===\n\n';
-    
-    revisedSubtitles.forEach((subtitle, index) => {
+
+    let displayText = '=== 자동 수정 목록 ===\n\n';
+
+    modifiedSubtitles.forEach((subtitle, index) => {
         displayText += `${index + 1}. [${subtitle.id}] ${subtitle.time}\n`;
         displayText += `원본: ${subtitle.originalText}\n`;
-        displayText += `수정: ${subtitle.revisedText}\n`;
+        displayText += `수정: ${subtitle.modifiedText}\n`;
+        displayText += `변경: ${subtitle.changes.join(', ')}\n`;
         displayText += '─'.repeat(50) + '\n\n';
     });
-    
-    processedTextArea.value = displayText;
+
+    resultTextArea.value = displayText;
 }

@@ -631,3 +631,15 @@ function displayAutoCorrectResults(modifiedSubtitles) {
 
     resultTextArea.value = displayText;
 }
+
+// 자동 수정 결과 다운로드
+function downloadAutoCorrectResult() {
+    const fullText = document.getElementById('full-corrected-subtitle').value;
+
+    if (!fullText.trim()) {
+        alert('처리된 자막이 없습니다');
+        return;
+    }
+
+    downloadFile(fullText, 'auto_corrected_subtitle.srt', 'text/plain');
+}

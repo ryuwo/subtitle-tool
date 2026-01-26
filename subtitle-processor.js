@@ -542,10 +542,9 @@ function processAutoCorrections(srtContent) {
     let autoFixCount = 0;
     const modifiedSubtitles = [];
 
-    const originalBlocks = srtContent.trim().split(/\n\s*\n/);
     const subtitles = parseSRT(srtContent);
 
-    subtitles.forEach((subtitle, index) => {
+    subtitles.forEach((subtitle) => {
         let originalText = subtitle.text;
         let modifiedText = originalText;
         let hasAutoFix = false;
@@ -564,23 +563,6 @@ function processAutoCorrections(srtContent) {
             modifiedText = trimmedText;
             hasAutoFix = true;
             subtitleChanges.push('텍스트 공백 정리');
-        }
-
-        // 3. 행번호/타임라인 공백 체크
-        if (originalBlocks[index]) {
-            const blockLines = originalBlocks[index].trim().split('\n');
-
-            // 행번호(첫 번째 줄) 공백 체크
-            if (blockLines[0] && blockLines[0] !== blockLines[0].trim()) {
-                hasAutoFix = true;
-                subtitleChanges.push('행번호 공백 제거');
-            }
-
-            // 타임라인(두 번째 줄) 공백 체크
-            if (blockLines[1] && blockLines[1] !== blockLines[1].trim()) {
-                hasAutoFix = true;
-                subtitleChanges.push('타임라인 공백 제거');
-            }
         }
 
         if (hasAutoFix) {

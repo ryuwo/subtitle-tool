@@ -26,10 +26,31 @@
         
             <section class="connection-section">
                 <h2>📊 Google Sheets 연결</h2>
-                <div class="language-buttons">
-                    <button onclick="connectToLanguageSheet('japanese')" class="lang-btn lang-jp">🇯🇵 일본어</button>
-                    <button onclick="connectToLanguageSheet('chinese')" class="lang-btn lang-cn">🇨🇳 중국어</button>
-                    <button onclick="connectToLanguageSheet('english')" class="lang-btn lang-en">🇺🇸 영어</button>
+                <div class="language-cards">
+                    <div class="lang-card lang-card-jp">
+                        <span class="lang-flag">🇯🇵</span>
+                        <span class="lang-name">일본어</span>
+                        <div class="lang-card-actions">
+                            <button onclick="connectToLanguageSheet('japanese')" class="btn-fetch">📥 시트 데이터 가져오기</button>
+                            <a href="https://docs.google.com/spreadsheets/d/12JXctT0dK7wJ4J_NUAZfTpwQHs7tp_Ue--av4boIY7s" target="_blank" class="btn-link">🔗 시트 열기</a>
+                        </div>
+                    </div>
+                    <div class="lang-card lang-card-cn">
+                        <span class="lang-flag">🇨🇳</span>
+                        <span class="lang-name">중국어</span>
+                        <div class="lang-card-actions">
+                            <button onclick="connectToLanguageSheet('chinese')" class="btn-fetch">📥 시트 데이터 가져오기</button>
+                            <a href="https://docs.google.com/spreadsheets/d/1QYvxyjlH_hoW8eM2v3dYaKQwfZ-kX-Oeqx7u12CgmBs" target="_blank" class="btn-link">🔗 시트 열기</a>
+                        </div>
+                    </div>
+                    <div class="lang-card lang-card-en">
+                        <span class="lang-flag">🇺🇸</span>
+                        <span class="lang-name">영어</span>
+                        <div class="lang-card-actions">
+                            <button onclick="connectToLanguageSheet('english')" class="btn-fetch">📥 시트 데이터 가져오기</button>
+                            <a href="https://docs.google.com/spreadsheets/d/1YHINIMQDnHkLMYIadx_bgR7RY8j1ZzRegxsE8dl8nNQ" target="_blank" class="btn-link">🔗 시트 열기</a>
+                        </div>
+                    </div>
                 </div>
                 <div id="connection-status" class="status"></div>
             </section>

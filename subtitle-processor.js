@@ -4,6 +4,11 @@ let isConnected = false;
 let currentSpreadsheetId = '';
 let apiInitialized = false;
 
+// 멤버 성+이름 풀네임 목록 (성이 붙은 형태는 오표기 치환에서 제외)
+const MEMBER_FULL_NAMES = [
+    'Nam Yejun', 'Han Noah', 'Chae Bamby', 'Do Eunho', 'Yu Hamin'
+];
+
 // Google API 초기화 (CORS 문제 해결)
 function initializeGoogleAPI() {
     if (typeof gapi === 'undefined') {
@@ -173,6 +178,11 @@ function processSubtitles(srtContent) {
                 regex = new RegExp('\\b' + escapeRegExp(wrongWord) + '\\b', 'g');
             } else {
                 regex = new RegExp(escapeRegExp(wrongWord), 'g');
+            }
+
+            // 성+이름 풀네임 내의 이름 부분은 치환 제외
+            if (isPartOfFullName(wrongWord, modifiedText)) {
+                continue;
             }
 
             const matches = modifiedText.match(regex);
@@ -395,6 +405,17 @@ function downloadFile(content, filename, mimeType) {
     URL.revokeObjectURL(url);
 }
 
+
+// 성+이름 풀네임에 포함된 이름인지 확인 (대소문자 무시)
+function isPartOfFullName(wrongWord, text) {
+    return MEMBER_FULL_NAMES.some(fullName => {
+        const fullNameRegex = new RegExp(escapeRegExp(fullName), 'gi');
+        if (!fullNameRegex.test(text)) return false;
+        // 풀네임의 이름 부분(성 제외)과 wrongWord가 대소문자 무시 시 같은지 확인
+        const namePart = fullName.split(' ').slice(1).join(' ');
+        return wrongWord.toLowerCase() === namePart.toLowerCase();
+    });
+}
 
 // 유틸리티 함수들
 function escapeRegExp(string) {

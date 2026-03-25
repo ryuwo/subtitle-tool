@@ -1,3 +1,4 @@
+/* === Reset & Base === */
 * {
     margin: 0;
     padding: 0;
@@ -5,74 +6,227 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     line-height: 1.6;
-    color: #333;
-    background-color: #f5f5f5;
+    color: #1a1a2e;
+    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+    min-height: 100vh;
 }
 
+/* === Container === */
 .container {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 24px 20px 40px;
 }
 
+/* === Header === */
 header {
     text-align: center;
-    margin-bottom: 30px;
-    background: white;
-    padding: 30px;
+    margin-bottom: 28px;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    padding: 32px 30px 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(30, 41, 59, 0.25);
+    color: white;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.company-logo {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 header h1 {
-    color: #2c3e50;
-    margin-bottom: 10px;
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin: 0;
 }
 
+header p {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+/* === Sections === */
 section {
-    background: white;
-    border-left: 4px solid #17a2b8;
+    background: #ffffff;
+    border-left: none;
     margin-bottom: 20px;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 28px;
+    border-radius: 14px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+    transition: box-shadow 0.2s;
+}
+
+section:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
 section h2 {
-    color: #34495e;
+    color: #1e293b;
+    font-size: 18px;
+    font-weight: 600;
     margin-bottom: 20px;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e2e8f0;
 }
 
-input[type="text"], input[type="file"] {
-    padding: 10px;
-    border: 2px solid #ddd;
-    border-radius: 5px;
-    margin-right: 10px;
-    font-size: 14px;
-    width: 300px;  
-    min-width: 100px;  /* 최소 너비 설정 */
+section h3 {
+    color: #334155;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 10px;
 }
 
-
+/* === Buttons === */
 button {
-    background-color: #3498db;
+    background: #3b82f6;
     color: white;
     padding: 10px 20px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.3s;
+    font-weight: 500;
+    transition: all 0.2s;
+    white-space: nowrap;
 }
 
 button:hover {
-    background-color: #2980b9;
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
+button:active {
+    transform: translateY(0);
+}
+
+/* === Language Cards === */
+.language-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.lang-card {
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.lang-card-jp {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.lang-card-cn {
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
+.lang-card-en {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.lang-flag {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.lang-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    display: block;
+    margin-bottom: 14px;
+}
+
+.lang-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.btn-fetch {
+    background: #3b82f6;
+    color: white;
+    padding: 9px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.btn-fetch:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-link {
+    display: inline-block;
+    padding: 8px 14px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.btn-link:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+    transform: translateY(-1px);
+}
+
+/* === Inputs & File Upload === */
+input[type="text"], input[type="file"] {
+    padding: 10px 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    margin-right: 10px;
+    font-size: 14px;
+    width: 300px;
+    min-width: 100px;
+    background: #f8fafc;
+    transition: border-color 0.2s;
+}
+
+input[type="text"]:focus, input[type="file"]:focus {
+    border-color: #3b82f6;
+    outline: none;
+    background: white;
+}
+
+/* === Text Areas === */
 .text-areas {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -83,102 +237,87 @@ button:hover {
 textarea {
     width: 100%;
     height: 300px;
-    padding: 15px;
-    border: 2px solid #ddd;
-    border-radius: 5px;
-    font-family: monospace;
-    font-size: 14px;
+    padding: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
     resize: vertical;
+    background: #f8fafc;
+    color: #1e293b;
+    line-height: 1.6;
+    transition: border-color 0.2s;
 }
 
+textarea:focus {
+    border-color: #3b82f6;
+    outline: none;
+    background: white;
+}
+
+textarea[readonly] {
+    background: #f1f5f9;
+    cursor: default;
+}
+
+/* === Dictionary Section === */
 .dict-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
 }
 
 .dict-preview {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 5px;
-    padding: 15px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
     max-height: 200px;
     overflow-y: auto;
+    font-size: 14px;
 }
 
+/* === Status Messages === */
 .status {
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 5px;
-    font-weight: bold;
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 14px;
 }
 
 .status.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
 }
 
 .status.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
 }
 
-@media (max-width: 768px) {
-    .text-areas {
-        grid-template-columns: 1fr;
-    }
-    
-    .dict-info {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-}
-.header-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    margin-bottom: 10px;
-}
-
-.company-logo {
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    border-radius: 8px;  
-}
-
-
-@media (max-width: 768px) {
-    .header-content {
-        gap: 12px;
-    }
-    
-    .company-logo {
-        width: 35px;
-        height: 35px;
-    }
-}
-.header-content h1 {
-    margin-top: 8px;  /* 이 값을 조정해서 아래로 이동 */
-    margin-bottom: 0;
-}
-
-/* 검수 섹션 스타일 추가 */
-.validation-section {
-    background: #f8f9fa;
-    border-left: 4px solid #17a2b8;
-}
-
-.validation-upload {
+/* === Upload Rows === */
+.file-upload,
+.validation-upload,
+.speaker-upload,
+.revision-upload {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
     align-items: center;
+    flex-wrap: wrap;
+}
+
+/* === Validation Section === */
+.validation-section {
+    background: #ffffff;
 }
 
 .validation-result {
@@ -186,21 +325,13 @@ textarea {
 }
 
 .validation-result textarea {
-    background-color: #fff;
-    border: 2px solid #17a2b8;
+    border-color: #93c5fd;
+    background: #f8fafc;
 }
 
-/* 화자 검사 섹션 스타일 추가 */
+/* === Speaker Section === */
 .speaker-section {
     background: #ffffff;
-    border-left: 4px solid #17a2b8;
-}
-
-.speaker-upload {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    align-items: center;
 }
 
 .speaker-result {
@@ -208,31 +339,14 @@ textarea {
 }
 
 .speaker-result textarea {
-    background-color: #fff;
-    border: 2px solid #17a2b8;
     height: 250px;
+    border-color: #93c5fd;
+    background: #f8fafc;
 }
 
-/* 3단계 버튼 특별 스타일 */
-.speaker-upload button:nth-child(3) {
-    background-color: #28a745;
-}
-
-.speaker-upload button:nth-child(3):hover {
-    background-color: #218838;
-}
-
-/* 4단계 수정안 섹션 스타일 */
+/* === Revision Section === */
 .revision-section {
     background: #ffffff;
-    border-left: 4px solid #17a2b8;
-}
-
-.revision-upload {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    align-items: center;
 }
 
 .revision-result {
@@ -240,77 +354,72 @@ textarea {
 }
 
 .revision-result textarea {
-    background-color: #fff;
-    border: 2px solid #17a2b8;
     height: 250px;
+    border-color: #93c5fd;
+    background: #f8fafc;
 }
 
-/* 4단계 버튼 특별 스타일 */
-.revision-upload button:nth-child(3) {
-    background-color: #17a2b8;
-}
-
-.revision-upload button:nth-child(3):hover {
-    background-color: #17a2b8;
-}
-
-/* 언어 버튼 스타일 */
-.language-buttons {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-bottom: 15px;
-}
-
-.lang-btn {
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: bold;
+/* === Step-specific button colors === */
+.validation-upload button[style*="background-color: #27ae60"],
+button[style*="background-color: #27ae60"] {
+    background: #22c55e !important;
     border-radius: 8px;
-    transition: all 0.3s;
-    min-width: 140px;
 }
 
-.lang-jp {
-    background-color: #e74c3c;
-    border: 2px solid #d03f2f;
+button[style*="background-color: #27ae60"]:hover {
+    background: #16a34a !important;
 }
 
-.lang-jp:hover {
-    background-color: #c0392b;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-.lang-cn {
-    background-color: #e67e22;
-    border: 2px solid #ec6b15;
-}
-
-.lang-cn:hover {
-    background-color: #d25d0e;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-.lang-en {
-    background-color: #3498db;
-    border: 2px solid #2d8fcf;
-}
-
-.lang-en:hover {
-    background-color: #2980b9;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
+/* === Responsive === */
 @media (max-width: 768px) {
-    .language-buttons {
+    .container {
+        padding: 16px 12px;
+    }
+
+    header {
+        padding: 24px 20px;
+    }
+
+    header h1 {
+        font-size: 22px;
+    }
+
+    .header-content {
+        gap: 10px;
+    }
+
+    .company-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    section {
+        padding: 20px 16px;
+    }
+
+    .language-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .text-areas {
+        grid-template-columns: 1fr;
+    }
+
+    .dict-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .file-upload,
+    .validation-upload,
+    .speaker-upload,
+    .revision-upload {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .lang-btn {
+    input[type="file"] {
         width: 100%;
     }
 }

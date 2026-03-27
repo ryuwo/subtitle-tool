@@ -25,30 +25,37 @@
         <main>
         
             <section class="connection-section">
-                <h2>📊 Google Sheets 연결</h2>
+                <h2>🔸 Google Sheets 연결</h2>
                 <div class="language-cards">
                     <div class="lang-card lang-card-jp">
                         <span class="lang-flag">🇯🇵</span>
                         <span class="lang-name">일본어</span>
                         <div class="lang-card-actions">
-                            <button onclick="connectToLanguageSheet('japanese')" class="btn-fetch">📥 시트 데이터 가져오기</button>
                             <a href="https://docs.google.com/spreadsheets/d/12JXctT0dK7wJ4J_NUAZfTpwQHs7tp_Ue--av4boIY7s" target="_blank" class="btn-link">🔗 시트 열기</a>
+                            <button onclick="connectToLanguageSheet('japanese')" class="btn-fetch">📥 시트 데이터 가져오기</button>
                         </div>
                     </div>
                     <div class="lang-card lang-card-cn">
                         <span class="lang-flag">🇨🇳</span>
                         <span class="lang-name">중국어</span>
                         <div class="lang-card-actions">
-                            <button onclick="connectToLanguageSheet('chinese')" class="btn-fetch">📥 시트 데이터 가져오기</button>
                             <a href="https://docs.google.com/spreadsheets/d/1QYvxyjlH_hoW8eM2v3dYaKQwfZ-kX-Oeqx7u12CgmBs" target="_blank" class="btn-link">🔗 시트 열기</a>
+                            <button onclick="connectToLanguageSheet('chinese')" class="btn-fetch">📥 시트 데이터 가져오기</button>
                         </div>
                     </div>
                     <div class="lang-card lang-card-en">
                         <span class="lang-flag">🇺🇸</span>
                         <span class="lang-name">영어</span>
                         <div class="lang-card-actions">
-                            <button onclick="connectToLanguageSheet('english')" class="btn-fetch">📥 시트 데이터 가져오기</button>
                             <a href="https://docs.google.com/spreadsheets/d/1YHINIMQDnHkLMYIadx_bgR7RY8j1ZzRegxsE8dl8nNQ" target="_blank" class="btn-link">🔗 시트 열기</a>
+                            <button onclick="connectToLanguageSheet('english')" class="btn-fetch">📥 시트 데이터 가져오기</button>
+                        </div>
+                    </div>
+                    <div class="lang-card lang-card-official">
+                        <span class="lang-flag">📖</span>
+                        <span class="lang-name">PLAVE 공식 단어장</span>
+                        <div class="lang-card-actions">
+                            <a href="https://docs.google.com/spreadsheets/d/1e56iXVRR_-VvoBQqUXpitlyeQB4_ueHv/edit?usp=sharing&ouid=107399147738542335695&rtpof=true&sd=true" target="_blank" class="btn-link">🔗 시트 열기</a>
                         </div>
                     </div>
                 </div>
@@ -56,7 +63,7 @@
             </section>
 
             <section class="dictionary-section">
-                <h2>📑 오역 사전 현황</h2>
+                <h2>🔸 오역 사전 현황</h2>
                 <div class="dict-info">
                     <span>현재 등록된 오역 항목: <strong id="dict-count">0</strong>개</span>
                     <button onclick="refreshDictionary()">새로고침</button>
@@ -65,7 +72,7 @@
             </section>
 
             <section class="process-section">
-    <h2>🔍 자막 오표기 수정</h2>
+    <h2>🔸 자막 오표기 수정</h2>
     <div class="file-upload">
         <input type="file" id="subtitle-file" accept=".srt,.vtt">
         <button onclick="processFile()">오류 탐색하기</button>
@@ -88,7 +95,7 @@
 </section>
 
     <section class="validation-section">
-        <h2>🔍 Segment 검수</h2>
+        <h2>🔸 Segment 검수</h2>
         <div class="validation-upload">
             <input type="file" id="validation-file" accept=".srt,.vtt">
             <button onclick="validateFile()">검수하기</button>
@@ -118,7 +125,7 @@ An era of injustice.
         </section>
 
 <section class="revision-section">
-    <h2>🔍 기타 오류 수정</h2>
+    <h2>🔸 기타 오류 수정</h2>
     <div class="revision-upload">
         <input type="file" id="revision-file" accept=".srt,.vtt">
         <button onclick="applyAutoCorrections()">자동 수정 실행</button>

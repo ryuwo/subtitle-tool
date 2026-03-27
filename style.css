@@ -120,7 +120,7 @@ button:active {
 /* === Language Cards === */
 .language-cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     margin-bottom: 16px;
 }
@@ -146,6 +146,11 @@ button:active {
 .lang-card-en {
     background: #eff6ff;
     border-color: #bfdbfe;
+}
+
+.lang-card-official {
+    background: #ffffff;
+    border-color: #bbbbbb;
 }
 
 .lang-flag {

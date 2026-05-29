@@ -75,103 +75,56 @@
     <h2>🔸 자막 오표기 수정</h2>
     <div class="file-upload">
         <input type="file" id="subtitle-file" accept=".srt,.vtt">
-        <button onclick="processFile()">오류 탐색하기</button>
+        <button onclick="processFile()">검사 시작</button>
     </div>
-    
-    <div class="text-areas">
-        <div class="text-area-container">
-            <h3>원본 자막</h3>
-            <textarea id="original-subtitle" placeholder="자막 파일을 업로드하세요"></textarea>
+
+    <div id="diff-summary" class="diff-summary" hidden>
+        <div class="diff-summary-text">
+            <span class="diff-count" id="diff-count">0</span>
+            <span>건의 오표기가 수정되었습니다</span>
         </div>
-        <div class="text-area-container">
-            <h3>수정 목록</h3>
-            <textarea id="processed-subtitle" readonly placeholder="수정된 오표기 목록이 표시됩니다"></textarea>
-            <button onclick="downloadResult()">수정본 다운로드</button>
-        </div>
+        <button onclick="downloadResult()" class="btn-primary">⬇ 수정본 다운로드</button>
     </div>
-    
-    <!-- 전체 수정된 자막 저장용 (숨겨진 textarea) -->
-    <textarea id="full-corrected-subtitle" style="display: none;"></textarea>
+
+    <div id="diff-list" class="diff-list" aria-live="polite">
+        <p class="diff-empty">자막 파일을 업로드하면 수정된 항목이 여기에 표시됩니다.</p>
+    </div>
+
+    <!-- 전체 수정된 자막 저장용 (숨겨진 요소) -->
+    <textarea id="full-corrected-subtitle" hidden></textarea>
+    <textarea id="original-subtitle" hidden></textarea>
 </section>
 
     <section class="validation-section">
         <h2>🔸 Segment 검수</h2>
         <div class="validation-upload">
             <input type="file" id="validation-file" accept=".srt,.vtt">
-            <button onclick="validateFile()">검수하기</button>
-            <button onclick="validateFromStep1()" style="background-color: #27ae60;">이전 단계 결과 검수</button>
+            <button onclick="validateFile()">검사 시작</button>
         </div>
-    
-        <div class="validation-result">
-            <h3>검수 결과</h3>
-            <textarea id="validation-result" readonly placeholder="Segment 누락, Segment 분리, 한국어 여부를 확인할 수 있습니다. 
 
-검출될 시 직접 수정해주세요.
-
- ❗️ Segment는 1번부터 시작되어야 합니다 ❗️
-
-잘못된 예시)
-1
-00:00:33,500 --> 00:00:35,835
-An era of injustice.
-3   
-00:00:36,736 --> 00:00:38,204
-제발!   
-
-⬆️ 한국어 검출, segment 분리 여부, 2번 segment 누락 검출 대상
-
-            "></textarea>
+        <div id="validation-summary" class="validation-summary" hidden>
+            <span id="validation-total"></span>
+            <button onclick="downloadValidationResult()" class="btn-primary" id="validation-download-btn" hidden>⬇ 수정본 다운로드</button>
         </div>
-        </section>
 
-<section class="revision-section">
-    <h2>🔸 기타 오류 수정</h2>
-    <div class="revision-upload">
-        <input type="file" id="revision-file" accept=".srt,.vtt">
-        <button onclick="applyAutoCorrections()">자동 수정 실행</button>
-    </div>
+        <div id="validation-tabs" class="validation-tabs" hidden>
+            <button class="validation-tab active" data-tab="korean" onclick="switchValidationTab('korean')">
+                🇰🇷 한국어 검출 <span class="validation-tab-count" id="tab-count-korean">0</span>
+            </button>
+            <button class="validation-tab" data-tab="segment" onclick="switchValidationTab('segment')">
+                📊 세그먼트 번호 <span class="validation-tab-count" id="tab-count-segment">0</span>
+            </button>
+            <button class="validation-tab" data-tab="auto" onclick="switchValidationTab('auto')">
+                🛠 기타 오류 수정 <span class="validation-tab-count" id="tab-count-auto">0</span>
+            </button>
+        </div>
 
-    <div class="revision-result">
-        <h3>자동 수정 결과</h3>
-        <textarea id="revision-result" readonly placeholder="기타 오류 수정 결과가 여기에 표시됩니다.
+        <div id="validation-list" class="validation-list">
+            <p class="diff-empty">자막 파일을 업로드하면 한국어 검출, 세그먼트 번호, 기타 오류가 탭별로 표시됩니다.</p>
+        </div>
 
-아래 '수정본 다운로드'를 통해 자동으로 수정할 수 있습니다. 
-
-오류 항목)
-
-1. 숫자 뒤 온점 추가 (예: 1 → 1.)
-
-2. 텍스트 앞뒤 공백 정리
-
-3. 행번호 공백 제거
-
-4. 타임라인 공백 제거"></textarea>
-        <button onclick="downloadAutoCorrectResult()">수정본 다운로드</button>
-    </div>
-</section>
-
-<section class="speaker-section">
-    <h2>🔍 화자 누락 검출</h2>
-    <div class="speaker-upload">
-        <input type="file" id="speaker-file" accept=".srt,.vtt">
-        <button onclick="checkSpeakers()">화자 누락 검사</button>
-    </div>
-    <div class="speaker-result">
-        <h3>화자 누락 검사 결과</h3>
-        <textarea id="speaker-result" readonly placeholder="화자 누락 검사 결과가 여기에 표시됩니다
-
-잘못된 예시)
-1
-00:00:33,500 --> 00:00:35,835
-An era of injustice.
-
-⬇️ 화자 누락: 수정 필요
-
-1
-00:00:33,500 --> 00:00:35,835
-Kang Dong-ju: An era of injustice."></textarea>
-    </div>
-</section>
+        <textarea id="validation-corrected-subtitle" hidden></textarea>
+    </section>
 
         </main>
     </div>

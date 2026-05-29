@@ -223,162 +223,352 @@ function processSubtitles(srtContent) {
 
 
 
-// 🆕 2단계: 한국어 검출 함수
+// 2단계: 한국어 검출 함수 (구조화된 데이터 반환)
 function detectKoreanInSubtitles(srtContent) {
     const koreanPattern = /[가-힣ㄱ-ㅎㅏ-ㅣ]/;
     const warnings = [];
     const subtitles = parseSRT(srtContent);
-    
+
     subtitles.forEach(subtitle => {
         if (koreanPattern.test(subtitle.text)) {
-            warnings.push(`${subtitle.id} ${subtitle.time}\n${subtitle.text}[ ⚠️ ] 한국어 검출`);
+            warnings.push({
+                id: subtitle.id,
+                time: subtitle.time,
+                text: subtitle.text
+            });
         }
     });
-    
+
     return warnings;
 }
 
-// 🆕 2단계: 세그먼트 번호 검사 함수
+// 2단계: 세그먼트 번호 검사 함수 (구조화된 데이터 반환)
 function checkSegmentNumbers(subtitles) {
     const issues = [];
-    const segmentIds = [];
-    
+    const seenIds = new Set();
+
     subtitles.forEach((subtitle, index) => {
         const id = parseInt(subtitle.id);
         const expected = index + 1;
-        
-        // 중복 검사
-        if (segmentIds.includes(id)) {
-            issues.push(`중복: ${id}번 (${index + 1}번째 위치)`);
-        } else {
-            segmentIds.push(id);
+        const position = index + 1;
+
+        // 세그먼트 번호에 점이 붙어있는 경우 감지
+        if (subtitle.rawId && /\.$/.test(subtitle.rawId)) {
+            issues.push({
+                kind: 'dot',
+                label: '번호 점 오류',
+                detail: `${position}번째 세그먼트 번호에 점이 붙어 있음 (${subtitle.rawId})`,
+                time: subtitle.time
+            });
         }
-        
-        // 순서 검사
+
+        if (seenIds.has(id)) {
+            issues.push({
+                kind: 'duplicate',
+                label: '중복',
+                detail: `${id}번이 ${position}번째 위치에서 다시 등장`,
+                time: subtitle.time
+            });
+        } else {
+            seenIds.add(id);
+        }
+
         if (id !== expected) {
-            issues.push(`순서 오류: ${index + 1}번째 위치에 ${id}번 (예상: ${expected}번)`);
+            issues.push({
+                kind: 'order',
+                label: '순서 오류',
+                detail: `${position}번째 위치에 ${id}번 (예상: ${expected}번)`,
+                time: subtitle.time
+            });
         }
     });
-    
+
     return issues;
 }
 
-// 🆕 2단계: 검수 메인 함수
+// 2단계: 검수 메인 함수 (탭 카드 렌더링)
 function validateSubtitles(srtContent) {
     const subtitles = parseSRT(srtContent);
     const koreanWarnings = detectKoreanInSubtitles(srtContent);
     const segmentIssues = checkSegmentNumbers(subtitles);
-    
-    let resultText = '=== 자막 검수 결과 ===\n\n';
-    
-    // 한국어 검출 결과
-    if (koreanWarnings.length > 0) {
-        resultText += `🇰🇷 한국어 검출 (${koreanWarnings.length}개):\n`;
-        resultText += '─'.repeat(50) + '\n';
-        koreanWarnings.forEach(warning => {
-            resultText += warning + '\n';
-            resultText += '─'.repeat(30) + '\n';
-        });
-        resultText += '\n';
-    }
-    
-    // 세그먼트 번호 검사 결과
-    if (segmentIssues.length > 0) {
-        resultText += `📊 세그먼트 번호 문제 (${segmentIssues.length}개):\n`;
-        resultText += '─'.repeat(50) + '\n';
-        segmentIssues.forEach(issue => {
-            resultText += `• ${issue}\n`;
-        });
-        resultText += '\n';
-    }
-    
-    // 종합 결과
-    const totalIssues = koreanWarnings.length + segmentIssues.length;
-    if (totalIssues === 0) {
-        resultText += '✅ 검수 완료: 문제점이 발견되지 않았습니다.';
-    } else {
-        resultText += `⚠️ 검수 완료: 총 ${totalIssues}개 문제점 발견`;
-    }
-    
-    return resultText;
+    const autoFixResult = collectAutoCorrections(subtitles);
+    renderValidationResult(koreanWarnings, segmentIssues, autoFixResult);
 }
 
-// 🆕 2단계: 파일 검수 처리 함수
+// 자동 수정 항목을 수집하고 수정된 SRT 컨텐츠를 생성
+function collectAutoCorrections(subtitles) {
+    const modifiedSubtitles = [];
+    const workingSubtitles = subtitles.map(s => ({ ...s }));
+
+    workingSubtitles.forEach((subtitle) => {
+        const originalText = subtitle.text;
+        let modifiedText = originalText;
+        let hasAutoFix = false;
+        const subtitleChanges = [];
+
+        // 1. 숫자 뒤 온점 추가
+        if (/(\b\d+)$/.test(modifiedText)) {
+            modifiedText = modifiedText.replace(/(\b\d+)$/g, '$1.');
+            hasAutoFix = true;
+            subtitleChanges.push('숫자 뒤 온점 추가');
+        }
+
+        // 2. 텍스트 공백 정리
+        const trimmedText = modifiedText.trim();
+        if (trimmedText !== modifiedText) {
+            modifiedText = trimmedText;
+            hasAutoFix = true;
+            subtitleChanges.push('텍스트 공백 정리');
+        }
+
+        if (hasAutoFix) {
+            modifiedSubtitles.push({
+                id: subtitle.id,
+                time: subtitle.time,
+                originalText: originalText,
+                modifiedText: modifiedText,
+                changes: subtitleChanges
+            });
+        }
+
+        subtitle.text = modifiedText;
+    });
+
+    return {
+        items: modifiedSubtitles,
+        correctedContent: generateSRT(workingSubtitles)
+    };
+}
+
+function renderValidationResult(koreanWarnings, segmentIssues, autoFixResult) {
+    const container = document.getElementById('validation-list');
+    const summary = document.getElementById('validation-summary');
+    const totalEl = document.getElementById('validation-total');
+    const tabsEl = document.getElementById('validation-tabs');
+    const downloadBtn = document.getElementById('validation-download-btn');
+
+    // 자동수정 결과 SRT 저장 (다운로드용)
+    document.getElementById('validation-corrected-subtitle').value = autoFixResult.correctedContent || '';
+
+    // 탭 카운트 업데이트
+    document.getElementById('tab-count-korean').textContent = koreanWarnings.length;
+    document.getElementById('tab-count-segment').textContent = segmentIssues.length;
+    document.getElementById('tab-count-auto').textContent = autoFixResult.items.length;
+
+    const total = koreanWarnings.length + segmentIssues.length + autoFixResult.items.length;
+
+    if (total === 0) {
+        summary.hidden = false;
+        summary.className = 'validation-summary validation-summary-ok';
+        totalEl.textContent = '✅ 검수 완료: 문제점이 발견되지 않았습니다.';
+        tabsEl.hidden = true;
+        downloadBtn.hidden = true;
+        container.innerHTML = '';
+        return;
+    }
+
+    summary.hidden = false;
+    summary.className = 'validation-summary validation-summary-warn';
+    totalEl.textContent = `⚠️ 총 ${total}건의 문제점이 발견되었습니다`;
+    tabsEl.hidden = false;
+    downloadBtn.hidden = autoFixResult.items.length === 0;
+
+    // 한국어 검출 패널
+    const koreanPanel = koreanWarnings.length > 0
+        ? koreanWarnings.map(w => `
+            <article class="diff-card diff-card-korean">
+                <header class="diff-card-header">
+                    <span class="diff-card-id">#${escapeHtml(w.id)}</span>
+                    <span class="diff-card-time">${escapeHtml(w.time)}</span>
+                </header>
+                <div class="diff-card-body">
+                    <div class="diff-line diff-line-warn">
+                        <span class="diff-marker">자막</span>
+                        <span class="diff-text">${escapeHtml(w.text)}</span>
+                    </div>
+                </div>
+            </article>
+        `).join('')
+        : '<p class="diff-empty">한국어가 검출된 자막이 없습니다.</p>';
+
+    // 세그먼트 번호 패널
+    const segmentPanel = segmentIssues.length > 0
+        ? segmentIssues.map(issue => `
+            <article class="diff-card diff-card-segment">
+                <header class="diff-card-header">
+                    <span class="diff-card-id">${escapeHtml(issue.label)}</span>
+                    <span class="diff-card-time">${escapeHtml(issue.time)}</span>
+                </header>
+                <div class="diff-card-body">
+                    <div class="diff-line diff-line-error">
+                        <span class="diff-marker">내용</span>
+                        <span class="diff-text">${escapeHtml(issue.detail)}</span>
+                    </div>
+                </div>
+            </article>
+        `).join('')
+        : '<p class="diff-empty">세그먼트 번호 문제가 발견되지 않았습니다.</p>';
+
+    // 기타 오류 수정 패널
+    const autoPanel = autoFixResult.items.length > 0
+        ? autoFixResult.items.map(item => {
+            const changesHtml = item.changes
+                .map(c => `<span class="diff-tag">${escapeHtml(c)}</span>`)
+                .join('');
+            return `
+                <article class="diff-card">
+                    <header class="diff-card-header">
+                        <span class="diff-card-id">#${escapeHtml(item.id)}</span>
+                        <span class="diff-card-time">${escapeHtml(item.time)}</span>
+                    </header>
+                    <div class="diff-card-body">
+                        <div class="diff-line diff-line-old">
+                            <span class="diff-marker">원본</span>
+                            <span class="diff-text">${escapeHtml(item.originalText)}</span>
+                        </div>
+                        <div class="diff-line diff-line-new">
+                            <span class="diff-marker">수정본</span>
+                            <span class="diff-text">${escapeHtml(item.modifiedText)}</span>
+                        </div>
+                    </div>
+                    <footer class="diff-card-footer">${changesHtml}</footer>
+                </article>
+            `;
+        }).join('')
+        : '<p class="diff-empty">자동 수정할 항목이 없습니다.</p>';
+
+    container.innerHTML = `
+        <div class="validation-tab-panel active" data-panel="korean">
+            <div class="diff-list">${koreanPanel}</div>
+        </div>
+        <div class="validation-tab-panel" data-panel="segment">
+            <div class="diff-list">${segmentPanel}</div>
+        </div>
+        <div class="validation-tab-panel" data-panel="auto">
+            <div class="diff-list">${autoPanel}</div>
+        </div>
+    `;
+
+    // 기본 탭은 검출된 항목이 있는 첫 카테고리로
+    let defaultTab = 'korean';
+    if (koreanWarnings.length === 0 && segmentIssues.length > 0) defaultTab = 'segment';
+    else if (koreanWarnings.length === 0 && segmentIssues.length === 0) defaultTab = 'auto';
+    switchValidationTab(defaultTab);
+}
+
+// 탭 전환
+function switchValidationTab(tabName) {
+    document.querySelectorAll('.validation-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    document.querySelectorAll('.validation-tab-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.panel === tabName);
+    });
+}
+
+// 자동 수정 결과 다운로드
+function downloadValidationResult() {
+    const fullText = document.getElementById('validation-corrected-subtitle').value;
+    if (!fullText.trim()) {
+        alert('처리된 자막이 없습니다');
+        return;
+    }
+    downloadFile(fullText, 'auto_corrected_subtitle.srt', 'text/plain');
+}
+
+// 2단계: 파일 검수 처리 함수
 function validateFile() {
     const fileInput = document.getElementById('validation-file');
-    
+
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
         const reader = new FileReader();
-        
+
         reader.onload = function(e) {
-            const content = e.target.result;
-            const result = validateSubtitles(content);
-            document.getElementById('validation-result').value = result;
+            validateSubtitles(e.target.result);
         };
-        
+
         reader.readAsText(file, 'utf-8');
     } else {
         alert('검수할 자막 파일을 선택해주세요');
     }
 }
 
-// 🆕 2단계: 1단계 결과 검수 함수
-function validateFromStep1() {
-    const correctedContent = document.getElementById('full-corrected-subtitle').value;
-    
-    if (!correctedContent.trim()) {
-        alert('먼저 1단계에서 자막을 처리해주세요');
-        return;
-    }
-    
-    const result = validateSubtitles(correctedContent);
-    document.getElementById('validation-result').value = result;
-}
-
-
 // SRT 자막 파싱
 function parseSRT(srtContent) {
     const subtitles = [];
     const blocks = srtContent.trim().split(/\n\s*\n/); // 수정됨
-    
+
     blocks.forEach(block => {
         const lines = block.trim().split('\n'); // 수정됨
         if (lines.length >= 3) {
+            const rawId = lines[0].trim();
             const subtitle = {
-                id: lines[0].trim(),
+                id: rawId.replace(/\.$/, ''), // 후행 점 제거 후 저장
+                rawId: rawId,                  // 원본 ID (점 포함 여부 감지용)
                 time: lines[1].trim(),
                 text: lines.slice(2).join('\n') // 수정됨
             };
             subtitles.push(subtitle);
         }
     });
-    
+
     return subtitles;
 }
 
 
 
-// 수정된 자막만 표시하는 함수
+// HTML 이스케이프 헬퍼
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// 수정된 자막을 카드 리스트로 렌더링
 function displayModifiedSubtitles(modifiedSubtitles) {
-    const processedTextArea = document.getElementById('processed-subtitle');
-    
-    if (modifiedSubtitles.length === 0) {
-        processedTextArea.value = '수정된 대사가 없습니다.';
+    const listEl = document.getElementById('diff-list');
+    const summaryEl = document.getElementById('diff-summary');
+    const countEl = document.getElementById('diff-count');
+
+    if (!modifiedSubtitles || modifiedSubtitles.length === 0) {
+        summaryEl.hidden = true;
+        listEl.innerHTML = '<p class="diff-empty">수정할 오표기가 발견되지 않았습니다.</p>';
         return;
     }
-    
-    let displayText = '=== 수정된 대사 목록 ===\n\n';
-    
-    modifiedSubtitles.forEach((subtitle, index) => {
-        displayText += `${index + 1}. [${subtitle.id}] ${subtitle.time}\n`;
-        displayText += `원본: ${subtitle.originalText}\n`;
-        displayText += `수정: ${subtitle.modifiedText}\n`;
-        displayText += `변경: ${subtitle.changes.join(', ')}\n`;
-        displayText += '─'.repeat(50) + '\n\n';
-    });
-    
-    processedTextArea.value = displayText;
+
+    summaryEl.hidden = false;
+    countEl.textContent = modifiedSubtitles.length;
+
+    const cardsHtml = modifiedSubtitles.map(subtitle => {
+        const changesHtml = subtitle.changes
+            .map(c => `<span class="diff-tag">${escapeHtml(c)}</span>`)
+            .join('');
+        return `
+            <article class="diff-card">
+                <header class="diff-card-header">
+                    <span class="diff-card-id">#${escapeHtml(subtitle.id)}</span>
+                    <span class="diff-card-time">${escapeHtml(subtitle.time)}</span>
+                </header>
+                <div class="diff-card-body">
+                    <div class="diff-line diff-line-old">
+                        <span class="diff-marker">원본</span>
+                        <span class="diff-text">${escapeHtml(subtitle.originalText)}</span>
+                    </div>
+                    <div class="diff-line diff-line-new">
+                        <span class="diff-marker">수정본</span>
+                        <span class="diff-text">${escapeHtml(subtitle.modifiedText)}</span>
+                    </div>
+                </div>
+                <footer class="diff-card-footer">${changesHtml}</footer>
+            </article>
+        `;
+    }).join('');
+
+    listEl.innerHTML = cardsHtml;
 }
 
 // 전체 자막 파일 다운로드 (수정된 내용 적용)
@@ -480,169 +670,4 @@ function generateSRT(subtitles) {
 function DetectKorean(text) {
    const Koreanpattern = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
    return Koreanpattern.test(text);
-}
-// 3단계: 화자 누락 검출 함수
-function detectMissingSpeakers(srtContent) {
-    const warnings = [];
-    const subtitles = parseSRT(srtContent);
-    
-    subtitles.forEach(subtitle => {
-        const text = subtitle.text.trim();
-        if (!text) return; // 빈 대사는 무시
-        if (!text.includes(':')) {
-            // 콜론이 없으면 화자 누락으로 간주
-            warnings.push(`${subtitle.id} ${subtitle.time}\n${text}[ ⚠️ ] 화자 누락`);
-        }
-    });
-    return warnings;
-}
-
-// 3단계: 검수 결과 표시 함수 (화자 누락만 간단히)
-function displaySpeakerCheckResult(warnings) {
-    let resultText = '=== 화자 누락 검사 결과 ===\n\n';
-    if (warnings.length === 0) {
-        resultText += '✅ 검사 완료: 화자 누락이 발견되지 않았습니다.';
-    } else {
-        resultText += `⚠️ 화자 누락 발견 (${warnings.length}개):\n`;
-        resultText += '─'.repeat(60) + '\n';
-        warnings.forEach(warning => {
-            resultText += warning + '\n' + '─'.repeat(40) + '\n';
-        });
-    }
-    return resultText;
-}
-
-// 3단계: 새 파일로 화자 검사
-function checkSpeakers() {
-    const fileInput = document.getElementById('speaker-file');
-    if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const content = e.target.result;
-            const warnings = detectMissingSpeakers(content);
-            document.getElementById('speaker-result').value = displaySpeakerCheckResult(warnings);
-        };
-        reader.readAsText(file, 'utf-8');
-    } else {
-        alert('검사할 자막 파일을 선택해주세요');
-    }
-}
-
-// 3단계: 이전 단계 결과로 화자 검사
-function checkSpeakersFromPrevious() {
-    const content = document.getElementById('full-corrected-subtitle').value;
-    if (!content.trim()) {
-        alert('먼저 이전 단계에서 자막을 처리해주세요');
-        return;
-    }
-    const warnings = detectMissingSpeakers(content);
-    document.getElementById('speaker-result').value = displaySpeakerCheckResult(warnings);
-}
-
-// 4단계: 자동 수정 함수
-function applyAutoCorrections() {
-    const fileInput = document.getElementById('revision-file');
-
-    if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-
-        reader.onload = function(e) {
-            const content = e.target.result;
-            processAutoCorrections(content);
-        };
-
-        reader.readAsText(file, 'utf-8');
-    } else {
-        alert('자막 파일을 선택해주세요');
-    }
-}
-
-function processAutoCorrections(srtContent) {
-    let autoFixCount = 0;
-    const modifiedSubtitles = [];
-
-    const subtitles = parseSRT(srtContent);
-
-    subtitles.forEach((subtitle) => {
-        let originalText = subtitle.text;
-        let modifiedText = originalText;
-        let hasAutoFix = false;
-        const subtitleChanges = [];
-
-        // 1. 숫자 뒤 온점 추가
-        if (/(\b\d+)$/.test(modifiedText)) {
-            modifiedText = modifiedText.replace(/(\b\d+)$/g, '$1.');
-            hasAutoFix = true;
-            subtitleChanges.push('숫자 뒤 온점 추가');
-        }
-
-        // 2. 텍스트 공백 정리
-        const trimmedText = modifiedText.trim();
-        if (trimmedText !== modifiedText) {
-            modifiedText = trimmedText;
-            hasAutoFix = true;
-            subtitleChanges.push('텍스트 공백 정리');
-        }
-
-        if (hasAutoFix) {
-            autoFixCount++;
-
-            modifiedSubtitles.push({
-                id: subtitle.id,
-                time: subtitle.time,
-                originalText: originalText,
-                modifiedText: modifiedText,
-                changes: subtitleChanges
-            });
-        }
-
-        subtitle.text = modifiedText;
-    });
-
-    const correctedContent = generateSRT(subtitles);
-    displayAutoCorrectResults(modifiedSubtitles);
-    document.getElementById('full-corrected-subtitle').value = correctedContent;
-
-    // 결과 메시지
-    if (autoFixCount > 0) {
-        updateConnectionStatus(`4단계 완료: ${autoFixCount}개 자동 수정 (총 ${modifiedSubtitles.length}개 자막 수정)`, 'success');
-    } else {
-        updateConnectionStatus('4단계 완료: 수정할 내용이 발견되지 않았습니다', 'success');
-    }
-}
-
-// 자동 수정 결과 표시
-function displayAutoCorrectResults(modifiedSubtitles) {
-    const resultTextArea = document.getElementById('revision-result');
-
-    if (modifiedSubtitles.length === 0) {
-        resultTextArea.value = '자동 수정된 내용이 없습니다.';
-        return;
-    }
-
-    let displayText = '=== 자동 수정 목록 ===\n\n';
-
-    modifiedSubtitles.forEach((subtitle, index) => {
-        displayText += `${index + 1}. [${subtitle.id}] ${subtitle.time}\n`;
-        displayText += `원본: ${subtitle.originalText}\n`;
-        displayText += `수정: ${subtitle.modifiedText}\n`;
-        displayText += `변경: ${subtitle.changes.join(', ')}\n`;
-        displayText += '─'.repeat(50) + '\n\n';
-    });
-
-    resultTextArea.value = displayText;
-}
-
-// 자동 수정 결과 다운로드
-function downloadAutoCorrectResult() {
-    const fullText = document.getElementById('full-corrected-subtitle').value;
-
-    if (!fullText.trim()) {
-        alert('처리된 자막이 없습니다');
-        return;
-    }
-
-    downloadFile(fullText, 'auto_corrected_subtitle.srt', 'text/plain');
 }
